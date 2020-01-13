@@ -40,6 +40,7 @@
 
 #include "doomstat.h"
 
+#include "jrra_report.h"
 
 void	P_SpawnMapThing (mapthing_t*	mthing);
 
@@ -776,6 +777,9 @@ P_SetupLevel
     int		i;
     char	lumpname[9];
     int		lumpnum;
+
+
+    jrra_report(logical_gamemission, episode, map);
 	
     totalkills = totalitems = totalsecret = wminfo.maxfrags = 0;
     wminfo.partime = 180;

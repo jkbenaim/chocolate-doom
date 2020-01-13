@@ -26,6 +26,7 @@
 #include "m_bbox.h"
 #include "p_local.h"
 #include "s_sound.h"
+#include "jrra_report.h"
 
 void P_SpawnMapThing(mapthing_t * mthing);
 
@@ -559,6 +560,8 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
     char lumpname[9];
     int lumpnum;
     mobj_t *mobj;
+
+    jrra_report(heretic, episode, map);
 
     totalkills = totalitems = totalsecret = 0;
     for (i = 0; i < MAXPLAYERS; i++)
