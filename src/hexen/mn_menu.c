@@ -131,7 +131,6 @@ boolean MenuActive;
 int InfoType;
 int messageson = true;
 boolean mn_SuicideConsole;
-boolean demoextend; // from h2def.h
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -1659,9 +1658,10 @@ boolean MN_Responder(event_t * event)
         {
             if (slotptr)
             {
-                *textBuffer-- = 0;
-                *textBuffer = ASCII_CURSOR;
+                *textBuffer = 0;
                 slotptr--;
+                textBuffer = &SlotText[currentSlot][slotptr];
+                *textBuffer = ASCII_CURSOR;
             }
             return (true);
         }

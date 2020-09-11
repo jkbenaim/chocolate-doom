@@ -1055,6 +1055,22 @@ static default_t extra_defaults_list[] =
     //
 
     CONFIG_VARIABLE_INT(mouseb_nextweapon),
+    
+    //!
+    // @game heretic
+    //
+    // Mouse button to move to the left in the inventory.
+    //
+
+    CONFIG_VARIABLE_INT(mouseb_invleft),
+
+    //!
+    // @game heretic
+    //
+    // Mouse button to move to the right in the inventory.
+    //
+
+    CONFIG_VARIABLE_INT(mouseb_invright),
 
     //!
     // If non-zero, double-clicking a mouse button acts like pressing
@@ -1596,6 +1612,14 @@ static default_t extra_defaults_list[] =
     CONFIG_VARIABLE_KEY(key_arti_torch),
 
     //!
+    // @game heretic
+    //
+    // Key to use "morph ovum" artifact.
+    //
+
+    CONFIG_VARIABLE_KEY(key_arti_morph),
+
+    //!
     // @game hexen
     //
     // Key to use one of each artifact.
@@ -1899,7 +1923,7 @@ static int ParseIntParameter(const char *strparm)
     int parm;
 
     if (strparm[0] == '0' && strparm[1] == 'x')
-        sscanf(strparm+2, "%x", &parm);
+        sscanf(strparm+2, "%x", (unsigned int *) &parm);
     else
         sscanf(strparm, "%i", &parm);
 

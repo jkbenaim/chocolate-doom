@@ -800,7 +800,7 @@ static void InitMapInfo(void)
     int mcmdValue;
     mapInfo_t *info;
     char songMulch[10];
-    char *default_sky_name = DEFAULT_SKY_NAME;
+    const char *default_sky_name = DEFAULT_SKY_NAME;
 
     mapMax = 1;
 

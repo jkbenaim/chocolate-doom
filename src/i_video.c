@@ -17,6 +17,8 @@
 //
 
 
+#include <stdlib.h>
+
 #include "SDL.h"
 #include "SDL_opengl.h"
 
@@ -1149,7 +1151,7 @@ static void SetVideoMode(void)
     int w, h;
     int x, y;
     unsigned int rmask, gmask, bmask, amask;
-    int unused_bpp;
+    int bpp;
     int window_flags = 0, renderer_flags = 0;
     SDL_DisplayMode mode;
 
@@ -1283,9 +1285,7 @@ static void SetVideoMode(void)
 
     // Force integer scales for resolution-independent rendering.
 
-#if SDL_VERSION_ATLEAST(2, 0, 5)
     SDL_RenderSetIntegerScale(renderer, integer_scaling);
-#endif
 
     // Blank out the full screen area in case there is any junk in
     // the borders that won't otherwise be overwritten.
@@ -1321,10 +1321,10 @@ static void SetVideoMode(void)
 
     if (argbbuffer == NULL)
     {
-        SDL_PixelFormatEnumToMasks(pixel_format, &unused_bpp,
+        SDL_PixelFormatEnumToMasks(pixel_format, &bpp,
                                    &rmask, &gmask, &bmask, &amask);
         argbbuffer = SDL_CreateRGBSurface(0,
-                                          SCREENWIDTH, SCREENHEIGHT, 32,
+                                          SCREENWIDTH, SCREENHEIGHT, bpp,
                                           rmask, gmask, bmask, amask);
         SDL_FillRect(argbbuffer, NULL, 0);
     }
@@ -1369,10 +1369,10 @@ void I_InitGraphics(void)
     if (env != NULL)
     {
         char winenv[30];
-        int winid;
+        unsigned int winid;
 
         sscanf(env, "0x%x", &winid);
-        M_snprintf(winenv, sizeof(winenv), "SDL_WINDOWID=%i", winid);
+        M_snprintf(winenv, sizeof(winenv), "SDL_WINDOWID=%u", winid);
 
         putenv(winenv);
     }
