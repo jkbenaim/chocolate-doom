@@ -109,12 +109,13 @@ int totalkills, totalitems, totalsecret;        // for intermission
 
 int mouseSensitivity;
 
-char demoname[32];
+char *demoname;
 boolean demorecording;
 boolean longtics;               // specify high resolution turning in demos
 boolean lowres_turn;
 boolean shortticfix;            // calculate lowres turning like doom
 boolean demoplayback;
+boolean netdemo;
 boolean demoextend;
 byte *demobuffer, *demo_p, *demoend;
 boolean singledemo;             // quit after playing a demo from cmdline
@@ -1070,7 +1071,7 @@ void G_Ticker(void)
             if (demorecording)
                 G_WriteDemoTiccmd(cmd);
 
-            if (netgame && !(gametic % ticdup))
+            if (netgame && !netdemo && !(gametic % ticdup))
             {
                 if (gametic > BACKUPTICS
                     && consistancy[i][buf] != cmd->consistancy)
@@ -1691,11 +1692,11 @@ void G_InitNew(skill_t skill, int episode, int map)
     paused = false;
     demorecording = false;
     demoplayback = false;
+    netdemo = false;
     viewactive = true;
     gameepisode = episode;
     gamemap = map;
     gameskill = skill;
-    viewactive = true;
     BorderNeedRefresh = true;
 
     // Set the sky map
@@ -1859,6 +1860,7 @@ void G_WriteDemoTiccmd(ticcmd_t * cmd)
 void G_RecordDemo(skill_t skill, int numplayers, int episode, int map,
                   const char *name)
 {
+    size_t demoname_size;
     int i;
     int maxsize;
 
@@ -1885,8 +1887,9 @@ void G_RecordDemo(skill_t skill, int numplayers, int episode, int map,
 
     G_InitNew(skill, episode, map);
     usergame = false;
-    M_StringCopy(demoname, name, sizeof(demoname));
-    M_StringConcat(demoname, ".lmp", sizeof(demoname));
+    demoname_size = strlen(name) + 5;
+    demoname = Z_Malloc(demoname_size, PU_STATIC, NULL);
+    M_snprintf(demoname, demoname_size, "%s.lmp", name);
     maxsize = 0x20000;
 
     //!
@@ -1986,11 +1989,22 @@ void G_DoPlayDemo(void)
     for (i = 0; i < MAXPLAYERS; i++)
         playeringame[i] = (*demo_p++) != 0;
 
+    if (playeringame[1] || M_CheckParm("-solo-net") > 0
+                        || M_CheckParm("-netdemo") > 0)
+    {
+    	netgame = true;
+    }
+
     precache = false;           // don't spend a lot of time in loadlevel
     G_InitNew(skill, episode, map);
     precache = true;
     usergame = false;
     demoplayback = true;
+
+    if (netgame == true)
+    {
+      netdemo = true;
+    }
 }
 
 
@@ -2024,6 +2038,12 @@ void G_TimeDemo(char *name)
         playeringame[i] = (*demo_p++) != 0;
     }
 
+    if (playeringame[1] || M_CheckParm("-solo-net") > 0
+                        || M_CheckParm("-netdemo") > 0)
+    {
+      netgame = true;
+    }
+
     G_InitNew(skill, episode, map);
     starttime = I_GetTime();
 
@@ -2031,6 +2051,11 @@ void G_TimeDemo(char *name)
     demoplayback = true;
     timingdemo = true;
     singletics = true;
+
+    if (netgame == true)
+    {
+      netdemo = true;
+    }
 }
 
 
@@ -2065,6 +2090,8 @@ boolean G_CheckDemoStatus(void)
 
         W_ReleaseLumpName(defdemoname);
         demoplayback = false;
+        netdemo = false;
+        netgame = false;
         D_AdvanceDemo();
         return true;
     }
