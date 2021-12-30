@@ -18,7 +18,7 @@ const char *jrra_report_txt_path = "/tmp/jrra_report.txt";
  *  some wordwrap stuff
  *  stolen from https://stackoverflow.com/questions/22582989/word-wrap-program-c
  */
-inline int wordlen(const char * str){
+int wordlen(const char * str){
    int tempindex=0;
    while(str[tempindex]!=' ' && str[tempindex]!=0 && str[tempindex]!='\n'){
       ++tempindex;
