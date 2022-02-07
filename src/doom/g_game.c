@@ -1098,10 +1098,10 @@ void G_PlayerReborn (int player)
     p->usedown = p->attackdown = true;	// don't do anything immediately 
     p->playerstate = PST_LIVE;       
     p->health = deh_initial_health;     // Use dehacked value
-    p->readyweapon = p->pendingweapon = wp_pistol; 
+    p->readyweapon = p->pendingweapon = wp_fist;
     p->weaponowned[wp_fist] = true; 
-    p->weaponowned[wp_pistol] = true; 
-    p->ammo[am_clip] = deh_initial_bullets; 
+    //p->weaponowned[wp_pistol] = true;
+    //p->ammo[am_clip] = deh_initial_bullets;
 	 
     for (i=0 ; i<NUMAMMO ; i++) 
 	p->maxammo[i] = maxammo[i]; 

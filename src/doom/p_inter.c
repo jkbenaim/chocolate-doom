@@ -69,6 +69,7 @@ P_GiveAmmo
   int		num )
 {
     int		oldammo;
+    return false;
 	
     if (ammo == am_noammo)
 	return false;
@@ -204,11 +205,11 @@ P_GiveWeapon
     else
     {
 	gaveweapon = true;
-	player->weaponowned[weapon] = true;
-	player->pendingweapon = weapon;
+	//player->weaponowned[weapon] = true;
+	//player->pendingweapon = weapon;
     }
-	
-    return (gaveweapon || gaveammo);
+    return false;
+    //return (gaveweapon || gaveammo);
 }
 
  

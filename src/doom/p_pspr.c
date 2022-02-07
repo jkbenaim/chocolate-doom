@@ -466,7 +466,7 @@ A_Punch
 	
     damage = (P_Random ()%10+1)<<1;
 
-    if (player->powers[pw_strength])	
+    if (true || player->powers[pw_strength])
 	damage *= 10;
 
     angle = player->mo->angle;
