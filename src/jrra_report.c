@@ -317,6 +317,12 @@ void jrra_report(int logical_gamemission, int episode, int map)
 		goto out_free;
 	}
 
+	rc = fprintf(f, "RULES:\n- NO GUNS\n- ONLY FISTING\n- ALWAYS\n   BERSERK\n\n");
+	if (rc < 0) {
+		zErr = "in fprintf";
+		goto out_fclose;
+	}
+
 	rc = fprintf(f, "%s \n%s%s \n%s \n ",
 		prettygamename?:"",
 		prettymapnum?:"",
