@@ -73,8 +73,9 @@
 #include "r_local.h"
 #include "statdump.h"
 
-
 #include "d_main.h"
+
+#include "doomweb.h"
 
 //
 // D-DoomLoop()
@@ -1951,6 +1952,8 @@ void D_DoomMain (void)
 	else
 	    D_StartTitle ();                // start up intro loop
     }
+
+    I_DoomWebInit();
 
     D_DoomLoop ();  // never returns
 }

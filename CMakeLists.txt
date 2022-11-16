@@ -47,6 +47,10 @@ endif()
 
 find_package(m)
 
+pkg_check_modules(libulfius REQUIRED IMPORTED_TARGET libulfius)
+pkg_check_modules(libyder REQUIRED IMPORTED_TARGET libyder)
+pkg_check_modules(jansson REQUIRED IMPORTED_TARGET jansson)
+
 include(CheckSymbolExists)
 include(CheckIncludeFile)
 check_symbol_exists(strcasecmp "strings.h" HAVE_DECL_STRCASECMP)

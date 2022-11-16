@@ -98,7 +98,8 @@ set(GAME_SOURCE_FILES
     w_file_win32.c
     w_merge.c           w_merge.h
     z_zone.c            z_zone.h
-    jrra_report.c	jrra_report.h)
+    jrra_report.c	jrra_report.h
+    i_web.c             i_web.h)
 
 set(GAME_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/../")
 
@@ -122,7 +123,7 @@ set(DEHACKED_SOURCE_FILES
 set(SOURCE_FILES ${COMMON_SOURCE_FILES} ${GAME_SOURCE_FILES})
 set(SOURCE_FILES_WITH_DEH ${SOURCE_FILES} ${DEHACKED_SOURCE_FILES})
 
-set(EXTRA_LIBS SDL2::SDL2main SDL2::SDL2 SDL2::mixer SDL2::net textscreen pcsound opl sqlite3)
+set(EXTRA_LIBS SDL2::SDL2main SDL2::SDL2 SDL2::mixer SDL2::net textscreen pcsound opl sqlite3 PkgConfig::libulfius PkgConfig::libyder PkgConfig::jansson)
 if(SAMPLERATE_FOUND)
     list(APPEND EXTRA_LIBS samplerate::samplerate)
 endif()

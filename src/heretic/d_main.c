@@ -45,6 +45,8 @@
 #include "w_main.h"
 #include "v_video.h"
 
+#include "hereticweb.h"
+
 #define CT_KEY_GREEN    'g'
 #define CT_KEY_YELLOW   'y'
 #define CT_KEY_RED      'r'
@@ -1167,6 +1169,8 @@ void D_DoomMain(void)
     }
 
     finishStartup();
+
+    I_HereticWebInit();
 
     D_DoomLoop();               // Never returns
 }

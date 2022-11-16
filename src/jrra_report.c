@@ -14,6 +14,8 @@ bool jrra_did_register_atexit = false;
 const char *jrra_db_path = "/home/jason/d/doom/maps.db";
 const char *jrra_report_txt_path = "/tmp/jrra_report.txt";
 
+struct jrra_info_s jrra_info = {0};
+
 /*
  *  some wordwrap stuff
  *  stolen from https://stackoverflow.com/questions/22582989/word-wrap-program-c
@@ -327,6 +329,17 @@ void jrra_report(int logical_gamemission, int episode, int map)
 		zErr = "in fprintf";
 		goto out_fclose;
 	}
+
+	jrra_info.mission = logical_gamemission;
+	jrra_info.episode = episode;
+	jrra_info.map = map;
+    free(jrra_info.prettygamename);
+    jrra_info.prettygamename = strdup(prettygamename);
+    free(jrra_info.prettymapnum);
+    jrra_info.prettymapnum = strdup(prettymapnum);
+    free(jrra_info.mapname);
+    jrra_info.mapname = strdup(mapname);
+    jrra_info.valid = 1;
 
 out_fclose:
 	fclose(f);
