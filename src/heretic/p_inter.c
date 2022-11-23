@@ -24,6 +24,8 @@
 #include "p_local.h"
 #include "s_sound.h"
 
+#include "hereticweb.h"
+
 #define BONUSADD 6
 
 int WeaponValue[] = {
@@ -898,6 +900,9 @@ void P_KillMobj(mobj_t * source, mobj_t * target)
         if (target->flags & MF_COUNTKILL)
         {                       // Count for intermission
             source->player->killcount++;
+	    if (pthread_cond_broadcast(&webcond) != 0) {
+		    printf("broadcast error\n");
+	    }
         }
         if (target->player)
         {                       // Frag stuff
