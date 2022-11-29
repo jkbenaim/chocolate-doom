@@ -14,21 +14,24 @@
 // DESCRIPTION:
 //      Windows native MIDI
 
-#ifdef _WIN32
-
 #ifndef __I_WINMUSIC__
 #define __I_WINMUSIC__
+
+#ifdef _WIN32
 
 #include "doomtype.h"
 
 boolean I_WIN_InitMusic(void);
 void I_WIN_PlaySong(boolean looping);
+void I_WIN_PauseSong(void);
+void I_WIN_ResumeSong(void);
 void I_WIN_StopSong(void);
 void I_WIN_SetMusicVolume(int volume);
 boolean I_WIN_RegisterSong(char* filename);
 void I_WIN_UnRegisterSong(void);
 void I_WIN_ShutdownMusic(void);
 
-#endif
 
-#endif
+#endif // _WIN32
+
+#endif // __I_WINMUSIC__

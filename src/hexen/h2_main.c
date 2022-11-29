@@ -41,6 +41,9 @@
 #include "p_local.h"
 #include "v_video.h"
 #include "w_main.h"
+#include "am_map.h"
+
+#include "hexen_icon.c"
 
 // MACROS ------------------------------------------------------------------
 
@@ -68,10 +71,7 @@ void S_InitScript(void);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void H2_ProcessEvents(void);
-void H2_DoAdvanceDemo(void);
 void H2_AdvanceDemo(void);
-void H2_StartTitle(void);
 void H2_PageTicker(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -86,9 +86,6 @@ static void WarpCheck(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern boolean automapactive;
-extern boolean MenuActive;
-extern boolean askforquit;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -448,9 +445,12 @@ void D_DoomMain(void)
     {
         char *autoload_dir;
         autoload_dir = M_GetAutoloadDir("hexen.wad");
-        // TODO? DEH_AutoLoadPatches(autoload_dir);
-        W_AutoLoadWADs(autoload_dir);
-        free(autoload_dir);
+        if (autoload_dir != NULL)
+        {
+            // TODO? DEH_AutoLoadPatches(autoload_dir);
+            W_AutoLoadWADs(autoload_dir);
+            free(autoload_dir);
+        }
     }
 
     HandleArgs();
@@ -819,11 +819,12 @@ void H2_GameLoop(void)
     {
         char filename[20];
         M_snprintf(filename, sizeof(filename), "debug%i.txt", consoleplayer);
-        debugfile = fopen(filename, "w");
+        debugfile = M_fopen(filename, "w");
     }
     I_SetWindowTitle(gamedescription);
     I_GraphicsCheckCommandLine();
     I_SetGrabMouseCallback(D_GrabMouseCallback);
+    I_RegisterWindowIcon(hexen_icon_data, hexen_icon_w, hexen_icon_h);
     I_InitGraphics();
 
     while (1)

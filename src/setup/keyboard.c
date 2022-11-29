@@ -67,7 +67,7 @@ static int *shortcuts[] = { &key_menu_help, &key_menu_save, &key_menu_load,
                             &key_menu_screenshot,
                             &key_message_refresh, &key_multi_msg,
                             &key_multi_msgplayer[0], &key_multi_msgplayer[1],
-                            &key_multi_msgplayer[2], &key_multi_msgplayer[3] };
+                            &key_multi_msgplayer[2], &key_multi_msgplayer[3], NULL };
 
 static int *map_keys[] = { &key_map_north, &key_map_south, &key_map_east,
                            &key_map_west, &key_map_zoomin, &key_map_zoomout,
@@ -407,7 +407,7 @@ void ConfigKeyboard(TXT_UNCAST_ARG(widget), void *user_data)
 
     AddKeyControl(window, "Turn Left", &key_left);
     TXT_AddWidget(window, TXT_TABLE_EMPTY);
-    AddKeyControl(window, "Speed On", &key_speed);
+    AddKeyControl(window, "Run", &key_speed);
 
     AddKeyControl(window, "Turn Right", &key_right);
     TXT_AddWidget(window, TXT_TABLE_EMPTY);

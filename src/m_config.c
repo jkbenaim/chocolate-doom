@@ -24,6 +24,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <assert.h>
+#include <locale.h>
 
 #include "SDL_filesystem.h"
 
@@ -440,6 +441,13 @@ static default_t	doom_defaults_list[] =
     //
 
     CONFIG_VARIABLE_INT(mouseb_forward),
+
+    //!
+    // Mouse button to turn on running.  When held down, the player
+    // will run while moving.
+    //
+
+    CONFIG_VARIABLE_INT(mouseb_speed),
 
     //!
     // @game hexen strife
@@ -957,6 +965,26 @@ static default_t extra_defaults_list[] =
 
     CONFIG_VARIABLE_INT(gus_ram_kb),
 
+#ifdef _WIN32
+    //!
+    // MIDI device for native Windows MIDI.
+    //
+
+    CONFIG_VARIABLE_STRING(winmm_midi_device),
+
+    //!
+    // Reverb level for native Windows MIDI, default 40, range 0-127.
+    //
+
+    CONFIG_VARIABLE_INT(winmm_reverb_level),
+
+    //!
+    // Chorus level for native Windows MIDI, default 0, range 0-127.
+    //
+
+    CONFIG_VARIABLE_INT(winmm_chorus_level),
+#endif
+
     //!
     // @game doom strife
     //
@@ -1089,6 +1117,14 @@ static default_t extra_defaults_list[] =
     //
 
     CONFIG_VARIABLE_INT(mouseb_invright),
+
+    //!
+    // @game heretic hexen
+    //
+    // Mouse button to use artifact.
+    //
+
+    CONFIG_VARIABLE_INT(mouseb_useartifact),
 
     //!
     // If non-zero, double-clicking a mouse button acts like pressing
@@ -1837,7 +1873,7 @@ static void SaveDefaultCollection(default_collection_t *collection)
     int i, v;
     FILE *f;
 	
-    f = fopen (collection->filename, "w");
+    f = M_fopen(collection->filename, "w");
     if (!f)
 	return; // can't write the file, but don't complain
 
@@ -1986,7 +2022,41 @@ static void SetVariable(default_t *def, const char *value)
             break;
 
         case DEFAULT_FLOAT:
-            *def->location.f = (float) atof(value);
+        {
+            // Different locales use different decimal separators.
+            // However, the choice of the current locale isn't always
+            // under our own control. If the atof() function fails to
+            // parse the string representing the floating point number
+            // using the current locale's decimal separator, it will
+            // return 0, resulting in silent sound effects. To
+            // mitigate this, we replace the first non-digit,
+            // non-minus character in the string with the current
+            // locale's decimal separator before passing it to atof().
+            struct lconv *lc = localeconv();
+            char dec, *str;
+            int i = 0;
+
+            dec = lc->decimal_point[0];
+            str = M_StringDuplicate(value);
+
+            // Skip sign indicators.
+            if (str[i] == '-' || str[i] == '+')
+            {
+                i++;
+            }
+
+            for ( ; str[i] != '\0'; i++)
+            {
+                if (!isdigit(str[i]))
+                {
+                    str[i] = dec;
+                    break;
+                }
+            }
+
+            *def->location.f = (float) atof(str);
+            free(str);
+        }
             break;
     }
 }
@@ -1999,7 +2069,7 @@ static void LoadDefaultCollection(default_collection_t *collection)
     char strparm[100];
 
     // read the file in, overriding any set defaults
-    f = fopen(collection->filename, "r");
+    f = M_fopen(collection->filename, "r");
 
     if (f == NULL)
     {
@@ -2364,6 +2434,11 @@ void M_SetMusicPackDir(void)
     }
 
     prefdir = SDL_GetPrefPath("", PACKAGE_TARNAME);
+    if (prefdir == NULL)
+    {
+        printf("M_SetMusicPackDir: SDL_GetPrefPath failed, music pack directory not set\n");
+        return;
+    }
     music_pack_path = M_StringJoin(prefdir, "music-packs", NULL);
 
     M_MakeDirectory(prefdir);
@@ -2460,6 +2535,11 @@ char *M_GetAutoloadDir(const char *iwadname)
     {
         char *prefdir;
         prefdir = SDL_GetPrefPath("", PACKAGE_TARNAME);
+        if (prefdir == NULL)
+        {
+            printf("M_GetAutoloadDir: SDL_GetPrefPath failed\n");
+            return NULL;
+        }
         autoload_path = M_StringJoin(prefdir, "autoload", NULL);
         SDL_free(prefdir);
     }

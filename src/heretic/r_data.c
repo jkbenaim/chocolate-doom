@@ -25,7 +25,6 @@
 #include "r_local.h"
 #include "p_local.h"
 
-extern void CheckAbortStartup(void);
 
 typedef struct
 {
@@ -301,7 +300,6 @@ void R_InitTextures(void)
     int *maptex, *maptex2, *maptex1;
     char name[9], *names, *name_p;
     int *patchlookup;
-    int totalwidth;
     int nummappatches;
     int offset, maxoff, maxoff2;
     int numtextures1, numtextures2;
@@ -368,8 +366,6 @@ void R_InitTextures(void)
     texturewidthmask = Z_Malloc(numtextures * sizeof(int), PU_STATIC, 0);
     textureheight = Z_Malloc(numtextures * sizeof(fixed_t), PU_STATIC, 0);
 
-    totalwidth = 0;
-
     for (i = 0; i < numtextures; i++, directory++)
     {
 #ifdef __NEXT__
@@ -418,8 +414,6 @@ void R_InitTextures(void)
             j <<= 1;
         texturewidthmask[i] = j - 1;
         textureheight[i] = texture->height << FRACBITS;
-
-        totalwidth += texture->width;
     }
 
     Z_Free(patchlookup);

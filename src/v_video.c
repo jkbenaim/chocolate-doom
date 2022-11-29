@@ -315,7 +315,7 @@ void V_DrawTLPatch(int x, int y, patch_t * patch)
 
             while (count--)
             {
-                *dest = tinttable[((*dest) << 8) + *source++];
+                *dest = tinttable[*dest + ((*source++) << 8)];
                 dest += SCREENWIDTH;
             }
             column = (column_t *) ((byte *) column + column->length + 4);
@@ -752,7 +752,7 @@ void WritePNGfile(char *filename, pixel_t *data,
         h_factor = 1;
     }
 
-    handle = fopen(filename, "wb");
+    handle = M_fopen(filename, "wb");
     if (!handle)
     {
         return;
@@ -841,7 +841,6 @@ void V_ScreenShot(const char *format)
     // find a file name to save it to
 
 #ifdef HAVE_LIBPNG
-    extern int png_screenshots;
     if (png_screenshots)
     {
         ext = "png";
@@ -986,7 +985,6 @@ static void DrawNonAcceleratingBox(int speed)
 
 void V_DrawMouseSpeedBox(int speed)
 {
-    extern int usemouse;
     int bgcolor, bordercolor, black;
 
     // If the mouse is turned off, don't draw the box at all.

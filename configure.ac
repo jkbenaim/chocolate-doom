@@ -3,7 +3,7 @@ AC_INIT(Chocolate Doom, 3.0.0,
 
 PACKAGE_SHORTNAME=${PACKAGE_NAME% Doom}
 PACKAGE_SHORTDESC="Conservative source port"
-PACKAGE_COPYRIGHT="Copyright (C) 1993-2021"
+PACKAGE_COPYRIGHT="Copyright (C) 1993-2022"
 PACKAGE_LICENSE="GNU General Public License, version 2"
 PACKAGE_MAINTAINER="Simon Howard"
 PACKAGE_URL="https://www.chocolate-doom.org/"
@@ -32,8 +32,24 @@ then
 fi
 
 PKG_CHECK_MODULES(SDL, [sdl2 >= 2.0.7])
-PKG_CHECK_MODULES(SDLMIXER, [SDL2_mixer >= 2.0.2])
-PKG_CHECK_MODULES(SDLNET, [SDL2_net >= 2.0.0])
+# Check for SDL2_mixer
+AC_ARG_ENABLE([sdl2mixer],
+AS_HELP_STRING([--disable-sdl2mixer], [Disable SDL2_mixer support])
+)
+AS_IF([test "x$enable_sdl2mixer" != xno], [
+    PKG_CHECK_MODULES(SDLMIXER, [SDL2_mixer >= 2.0.2])], [
+    AC_DEFINE([DISABLE_SDL2MIXER], [1], [SDL2_mixer disabled])
+])
+
+# Check for networking
+AC_ARG_ENABLE([sdl2net],
+AS_HELP_STRING([--disable-sdl2net], [Disable SDL2_net support])
+)
+AS_IF([test "x$enable_sdl2net" != xno], [
+    PKG_CHECK_MODULES(SDLNET, [SDL2_net >= 2.0.0])], [
+    AC_DEFINE([DISABLE_SDL2NET], [1], [SDL2_net disabled])
+])
+
 PKG_CHECK_MODULES(SQLITE, [sqlite3 >= 3.0.0])
 
 # Check for bash-completion.
@@ -78,6 +94,14 @@ AS_IF([test "x$enable_icons" != xno], [
         AC_MSG_WARN([Building icons require Python, but Python not found])
         enable_icons=no
     ])
+])
+
+# Check for memory pool debugging.
+AC_ARG_ENABLE([zpool],
+AS_HELP_STRING([--disable-zpool], [Disable memory pools for debugging])
+)
+AS_IF([test "x$enable_zpool" != xno], [], [
+    AC_DEFINE([DISABLE_ZPOOL], [1], [Memory pooling disabled])
 ])
 
 # Check for libsamplerate.
@@ -162,6 +186,7 @@ AM_CONDITIONAL(HAVE_BASH_COMPLETION, [test "x$enable_bash_completion" != xno])
 AM_CONDITIONAL(HAVE_DOC, [test "x$enable_doc" != xno])
 AM_CONDITIONAL(HAVE_FONTS, [test "x$enable_fonts" != xno])
 AM_CONDITIONAL(HAVE_ICONS, [test "x$enable_icons" != xno])
+AM_CONDITIONAL(HAVE_ZPOOL, [test "x$enable_zpool" != xno])
 
 dnl Automake v1.8.0 is required, please upgrade!
 
@@ -181,7 +206,7 @@ AC_DEFINE_UNQUOTED(PROGRAM_PREFIX, "$PROGRAM_PREFIX",
                    Change this when you create your awesome forked version)
 AC_SUBST(PROGRAM_SPREFIX)
 
-AM_CONFIG_HEADER(config.h:config.hin)
+AC_CONFIG_HEADERS(config.h:config.hin)
 
 AC_SUBST(WINDOWS_RC_VERSION)
 AC_SUBST(SDLMIXER_CFLAGS)
@@ -204,7 +229,7 @@ AC_SUBST(PACKAGE_BUGREPORT)
 dnl Shut up the datarootdir warnings.
 AC_DEFUN([AC_DATAROOTDIR_CHECKED])
 
-AC_OUTPUT([
+AC_CONFIG_FILES([
 Makefile
 man/Makefile
 man/bash-completion/Makefile
@@ -221,21 +246,24 @@ pkg/osx/Info.plist
 rpm.spec
 data/Makefile
 src/Makefile
+src/doom-res.rc
 src/Doom.metainfo.xml
 src/Doom.desktop
 src/Doom_Screensaver.desktop
 src/doom/Makefile
+src/heretic-res.rc
 src/Heretic.metainfo.xml
 src/Heretic.desktop
 src/heretic/Makefile
+src/hexen-res.rc
 src/Hexen.metainfo.xml
 src/Hexen.desktop
 src/hexen/Makefile
-src/resource.rc
 src/setup-res.rc
 src/setup/Makefile
 src/setup/Setup.desktop
 src/setup/setup-manifest.xml
+src/strife-res.rc
 src/Strife.metainfo.xml
 src/Strife.desktop
 src/strife/Makefile
@@ -243,4 +271,4 @@ textscreen/Makefile
 textscreen/examples/Makefile
 textscreen/fonts/Makefile
 ])
-
+AC_OUTPUT

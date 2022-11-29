@@ -75,6 +75,7 @@
 
 #include "d_main.h"
 
+#include "doom_icon.c"
 #include "doomweb.h"
 
 //
@@ -104,11 +105,7 @@ boolean         nomonsters;	// checkparm of -nomonsters
 boolean         respawnparm;	// checkparm of -respawn
 boolean         fastparm;	// checkparm of -fast
 
-//extern int soundVolume;
-//extern  int	sfxVolume;
-//extern  int	musicVolume;
 
-extern  boolean	inhelpscreens;
 
 skill_t		startskill;
 int             startepisode;
@@ -165,9 +162,6 @@ void D_ProcessEvents (void)
 
 // wipegamestate can be set to -1 to force a wipe on the next draw
 gamestate_t     wipegamestate = GS_DEMOSCREEN;
-extern  boolean setsizeneeded;
-extern  int             showMessages;
-void R_ExecuteSetViewSize (void);
 
 boolean D_Display (void)
 {
@@ -482,6 +476,7 @@ void D_DoomLoop (void)
     I_SetWindowTitle(gamedescription);
     I_GraphicsCheckCommandLine();
     I_SetGrabMouseCallback(D_GrabMouseCallback);
+    I_RegisterWindowIcon(doom_icon_data, doom_icon_w, doom_icon_h);
     I_InitGraphics();
     EnableLoadingDisk();
 
@@ -1185,6 +1180,14 @@ static void D_Endoom(void)
     I_Endoom(endoom);
 }
 
+boolean IsFrenchIWAD(void)
+{
+    return (gamemission == doom2 && W_CheckNumForName("M_RDTHIS") < 0
+          && W_CheckNumForName("M_EPISOD") < 0 && W_CheckNumForName("M_EPI1") < 0
+          && W_CheckNumForName("M_EPI2") < 0 && W_CheckNumForName("M_EPI3") < 0
+          && W_CheckNumForName("WIOSTF") < 0 && W_CheckNumForName("WIOBJ") >= 0);
+}
+
 // Load dehacked patches needed for certain IWADs.
 static void LoadIwadDeh(void)
 {
@@ -1240,6 +1243,42 @@ static void LoadIwadDeh(void)
         if (!DEH_LoadFile(chex_deh))
         {
             I_Error("Failed to load chex.deh needed for emulating chex.exe.");
+        }
+    }
+
+    if (IsFrenchIWAD())
+    {
+        char *french_deh = NULL;
+        char *dirname;
+
+        // Look for french.deh in the same directory as the IWAD file.
+        dirname = M_DirName(iwadfile);
+        french_deh = M_StringJoin(dirname, DIR_SEPARATOR_S, "french.deh", NULL);
+        printf("French version\n");
+        free(dirname);
+
+        // If the dehacked patch isn't found, try searching the WAD
+        // search path instead.  We might find it...
+        if (!M_FileExists(french_deh))
+        {
+            free(french_deh);
+            french_deh = D_FindWADByName("french.deh");
+        }
+
+        // Still not found?
+        if (french_deh == NULL)
+        {
+            I_Error("Unable to find French Doom II dehacked file\n"
+                    "(french.deh).  The dehacked file is required in order to\n"
+                    "emulate French doom2.exe correctly.  It can be found in\n"
+                    "your nearest /idgames repository mirror at:\n\n"
+                    "   utils/exe_edit/patches/french.zip");
+        }
+
+        if (!DEH_LoadFile(french_deh))
+        {
+            I_Error("Failed to load french.deh needed for emulating French\n"
+                    "doom2.exe.");
         }
     }
 }
@@ -1425,8 +1464,6 @@ void D_DoomMain (void)
     if ( (p=M_CheckParm ("-turbo")) )
     {
 	int     scale = 200;
-	extern int forwardmove[2];
-	extern int sidemove[2];
 	
 	if (p<myargc-1)
 	    scale = atoi (myargv[p+1]);
@@ -1563,16 +1600,22 @@ void D_DoomMain (void)
         if (gamemission < pack_chex)
         {
             autoload_dir = M_GetAutoloadDir("doom-all");
-            DEH_AutoLoadPatches(autoload_dir);
-            W_AutoLoadWADs(autoload_dir);
-            free(autoload_dir);
+            if (autoload_dir != NULL)
+            {
+                DEH_AutoLoadPatches(autoload_dir);
+                W_AutoLoadWADs(autoload_dir);
+                free(autoload_dir);
+            }
         }
 
         // auto-loaded files per IWAD
         autoload_dir = M_GetAutoloadDir(D_SaveGameIWADName(gamemission, gamevariant));
-        DEH_AutoLoadPatches(autoload_dir);
-        W_AutoLoadWADs(autoload_dir);
-        free(autoload_dir);
+        if (autoload_dir != NULL)
+        {
+            DEH_AutoLoadPatches(autoload_dir);
+            W_AutoLoadWADs(autoload_dir);
+            free(autoload_dir);
+        }
     }
 
     // Load Dehacked patches specified on the command line with -deh.

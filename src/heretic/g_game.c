@@ -39,7 +39,6 @@
 
 // Functions
 
-boolean G_CheckDemoStatus(void);
 void G_ReadDemoTiccmd(ticcmd_t * cmd);
 void G_WriteDemoTiccmd(ticcmd_t * cmd);
 void G_PlayerReborn(int player);
@@ -280,9 +279,6 @@ static int G_NextWeapon(int direction)
 ====================
 */
 
-extern boolean inventory;
-extern int curpos;
-extern int inv_ptr;
 
 boolean usearti = true;
 
@@ -294,8 +290,6 @@ void G_BuildTiccmd(ticcmd_t *cmd, int maketic)
     int forward, side;
     int look, arti;
     int flyheight;
-
-    extern boolean noartiskip;
 
     // haleyjd: removed externdriver crap
 
@@ -310,7 +304,8 @@ void G_BuildTiccmd(ticcmd_t *cmd, int maketic)
         || joybuttons[joybstrafe];
     speed = joybspeed >= MAX_JOY_BUTTONS
          || gamekeydown[key_speed]
-         || joybuttons[joybspeed];
+         || joybuttons[joybspeed]
+         || mousebuttons[mousebspeed];
 
     // haleyjd: removed externdriver crap
     
@@ -422,13 +417,14 @@ void G_BuildTiccmd(ticcmd_t *cmd, int maketic)
     }
 
     // Use artifact key
-    if (gamekeydown[key_useartifact])
+    if (gamekeydown[key_useartifact] || mousebuttons[mousebuseartifact])
     {
         if (gamekeydown[key_speed] && !noartiskip)
         {
             if (players[consoleplayer].inventory[inv_ptr].type != arti_none)
             {
                 gamekeydown[key_useartifact] = false;
+                mousebuttons[mousebuseartifact] = false;
                 cmd->arti = 0xff;       // skip artifact code
             }
         }
@@ -778,6 +774,11 @@ static void SetJoyButtons(unsigned int buttons_mask)
     }
 }
 
+// If an InventoryMove*() function is called when the inventory is not active,
+// it will instead activate the inventory without attempting to change the
+// selected item. This action is indicated by a return value of false.
+// Otherwise, it attempts to change items and will return a value of true.
+
 static boolean InventoryMoveLeft()
 {
     inventoryTics = 5 * 35;
@@ -834,6 +835,9 @@ static boolean InventoryMoveRight()
 static void SetMouseButtons(unsigned int buttons_mask)
 {
     int i;
+    player_t *plr;
+
+    plr = &players[consoleplayer];
 
     for (i=0; i<MAX_MOUSE_BUTTONS; ++i)
     {
@@ -858,6 +862,14 @@ static void SetMouseButtons(unsigned int buttons_mask)
             else if (i == mousebinvright)
             {
                 InventoryMoveRight();
+            }
+            else if (i == mousebuseartifact)
+            {
+                if (!inventory)
+                {
+                    plr->readyArtifact = plr->inventory[inv_ptr].type;
+                }
+                usearti = true;
             }
         }
 
@@ -1202,7 +1214,6 @@ void G_InitPlayer(int player)
 = Can when a player completes a level
 ====================
 */
-extern int playerkeys;
 
 void G_PlayerFinishLevel(int player)
 {

@@ -74,7 +74,7 @@ boolean P_SetMobjState(mobj_t * mobj, statenum_t state)
     mobj->frame = st->frame;
     if (st->action)
     {                           // Call action function
-        st->action(mobj);
+        st->action(mobj, NULL, NULL);
     }
     return (true);
 }
@@ -669,8 +669,9 @@ void P_NightmareRespawn(mobj_t * mobj)
 //
 //----------------------------------------------------------------------------
 
-void P_BlasterMobjThinker(mobj_t * mobj)
+void P_BlasterMobjThinker(thinker_t *thinker)
 {
+    mobj_t *mobj = (mobj_t *) thinker;
     int i;
     fixed_t xfrac;
     fixed_t yfrac;
@@ -740,8 +741,9 @@ void P_BlasterMobjThinker(mobj_t * mobj)
 //
 //----------------------------------------------------------------------------
 
-void P_MobjThinker(mobj_t * mobj)
+void P_MobjThinker(thinker_t *thinker)
 {
+    mobj_t *mobj = (mobj_t *) thinker;
     mobj_t *onmo;
 
     // Handle X and Y momentums
@@ -969,7 +971,6 @@ void P_SpawnPlayer(mapthing_t * mthing)
     fixed_t x, y, z;
     mobj_t *mobj;
     int i;
-    extern int playerkeys;
 
     if (!playeringame[mthing->type - 1])
         return;                 // not playing
@@ -1005,7 +1006,7 @@ void P_SpawnPlayer(mapthing_t * mthing)
     P_SetupPsprites(p);         // setup gun psprite        
     if (deathmatch)
     {                           // Give all keys in death match mode
-        for (i = 0; i < NUMKEYS; i++)
+        for (i = 0; i < NUM_KEY_TYPES; i++)
         {
             p->keys[i] = true;
             if (p == &players[consoleplayer])
@@ -1188,7 +1189,6 @@ void P_SpawnMapThing(mapthing_t * mthing)
 //
 //---------------------------------------------------------------------------
 
-extern fixed_t attackrange;
 
 void P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z)
 {
@@ -1611,7 +1611,7 @@ mobj_t *P_SPMAngle(mobj_t * source, mobjtype_t type, angle_t angle)
 //
 //---------------------------------------------------------------------------
 
-void A_ContMobjSound(mobj_t * actor)
+void A_ContMobjSound(mobj_t * actor, player_t *player, pspdef_t *psp)
 {
     switch (actor->type)
     {

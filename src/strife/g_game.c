@@ -388,7 +388,8 @@ void G_BuildTiccmd (ticcmd_t* cmd, int maketic)
     speed = key_speed >= NUMKEYS
          || joybspeed >= MAX_JOY_BUTTONS
          || gamekeydown[key_speed] 
-         || joybuttons[joybspeed];
+         || joybuttons[joybspeed]
+         || mousebuttons[mousebspeed];
  
     forward = side = 0;
 
@@ -1368,8 +1369,6 @@ void G_ScreenShot (void)
 //
 // G_DoCompleted 
 //
-//boolean         secretexit; 
-extern char*	pagename; 
 
 //
 // G_RiftExitLevel
@@ -1658,8 +1657,6 @@ void G_ReadCurrent(const char *path)
 // G_InitFromSavegame
 // Can be called by the startup code or the menu task. 
 //
-extern boolean setsizeneeded;
-void R_ExecuteSetViewSize (void);
 
 char	savename[256];
 
@@ -1681,7 +1678,7 @@ void G_DoLoadGame (boolean userload)
 
     gameaction = ga_nothing;
 
-    save_stream = fopen(loadpath, "rb");
+    save_stream = M_fopen(loadpath, "rb");
 
     // [STRIFE] If the file does not exist, G_DoLoadLevel is called.
     if (save_stream == NULL)
@@ -1827,7 +1824,7 @@ void G_DoSaveGame (char *path)
     // This prevents an existing savegame from being overwritten by 
     // a corrupted one, or if a savegame buffer overrun occurs.
 
-    save_stream = fopen(temp_savegame_file, "wb");
+    save_stream = M_fopen(temp_savegame_file, "wb");
 
     if (save_stream == NULL)
     {
@@ -1861,8 +1858,8 @@ void G_DoSaveGame (char *path)
     // Now rename the temporary savegame file to the actual savegame
     // file, overwriting the old savegame if there was one there.
 
-    remove(savegame_file);
-    rename(temp_savegame_file, savegame_file);
+    M_remove(savegame_file);
+    M_rename(temp_savegame_file, savegame_file);
     
     // haleyjd: free the savegame_file path
     Z_Free(savegame_file);

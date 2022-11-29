@@ -136,6 +136,7 @@ extern int key_menu_screenshot;
 extern int mousebfire;
 extern int mousebstrafe;
 extern int mousebforward;
+extern int mousebspeed;
 
 extern int mousebjump;
 
@@ -150,6 +151,7 @@ extern int mousebprevweapon;
 extern int mousebnextweapon;
 extern int mousebinvleft;
 extern int mousebinvright;
+extern int mousebuseartifact;
 
 extern int joybfire;
 extern int joybstrafe;

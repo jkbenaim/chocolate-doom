@@ -19,12 +19,27 @@
 
 #include <windows.h>
 #include <mmsystem.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "doomtype.h"
 #include "m_misc.h"
 #include "midifile.h"
+#include "i_sound.h"
+#include "i_winmusic.h"
+
+
+#define BETWEEN(l,u,x) (((l)>(x))?(l):((x)>(u))?(u):(x))
+
+#define REVERB_MIN 0
+#define REVERB_MAX 127
+#define CHORUS_MIN 0
+#define CHORUS_MAX 127
+
+char *winmm_midi_device = NULL;
+int winmm_reverb_level = 40;
+int winmm_chorus_level = 0;
 
 static HMIDISTRM hMidiStream;
 static HANDLE hBufferReturnEvent;
@@ -335,11 +350,96 @@ static void UpdateVolume(void)
     }
 }
 
+void ResetDevice(void)
+{
+    for (int i = 0; i < MIDI_CHANNELS_PER_TRACK; ++i)
+    {
+        DWORD msg = 0;
+
+        // RPN sequence to adjust pitch bend range (RPN value 0x0000)
+        msg = MIDI_EVENT_CONTROLLER | i | 0x65 << 8 | 0x00 << 16;
+        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
+        msg = MIDI_EVENT_CONTROLLER | i | 0x64 << 8 | 0x00 << 16;
+        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
+
+        // reset pitch bend range to central tuning +/- 2 semitones and 0 cents
+        msg = MIDI_EVENT_CONTROLLER | i | 0x06 << 8 | 0x02 << 16;
+        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
+        msg = MIDI_EVENT_CONTROLLER | i | 0x26 << 8 | 0x00 << 16;
+        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
+
+        // end of RPN sequence
+        msg = MIDI_EVENT_CONTROLLER | i | 0x64 << 8 | 0x7F << 16;
+        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
+        msg = MIDI_EVENT_CONTROLLER | i | 0x65 << 8 | 0x7F << 16;
+        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
+
+        // reset all controllers
+        msg = MIDI_EVENT_CONTROLLER | i | 0x79 << 8 | 0x00 << 16;
+        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
+
+        // reset pan to 64 (center)
+        msg = MIDI_EVENT_CONTROLLER | i | 0x0A << 8 | 0x40 << 16;
+        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
+
+        // reset reverb and other effect controllers
+        msg = MIDI_EVENT_CONTROLLER | i | 0x5B << 8 | winmm_reverb_level << 16;
+        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
+        msg = MIDI_EVENT_CONTROLLER | i | 0x5C << 8 | 0x00 << 16; // tremolo
+        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
+        msg = MIDI_EVENT_CONTROLLER | i | 0x5D << 8 | winmm_chorus_level << 16;
+        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
+        msg = MIDI_EVENT_CONTROLLER | i | 0x5E << 8 | 0x00 << 16; // detune
+        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
+        msg = MIDI_EVENT_CONTROLLER | i | 0x5F << 8 | 0x00 << 16; // phaser
+        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
+    }
+}
+
 boolean I_WIN_InitMusic(void)
 {
-    UINT MidiDevice = MIDI_MAPPER;
+    UINT MidiDevice;
+    int all_devices;
+    int i;
     MIDIHDR *hdr = &buffer.MidiStreamHdr;
+    MIDIOUTCAPS mcaps;
     MMRESULT mmr;
+
+    // find the midi device that matches the saved one
+    if (winmm_midi_device != NULL)
+    {
+        all_devices = midiOutGetNumDevs() + 1; // include MIDI_MAPPER
+        for (i = 0; i < all_devices; ++i)
+        {
+            // start from device id -1 (MIDI_MAPPER)
+            mmr = midiOutGetDevCaps(i - 1, &mcaps, sizeof(mcaps));
+            if (mmr == MMSYSERR_NOERROR)
+            {
+                if (strstr(winmm_midi_device, mcaps.szPname))
+                {
+                    MidiDevice = i - 1;
+                    break;
+                }
+            }
+
+            if (i == all_devices - 1)
+            {
+                // give up and use MIDI_MAPPER
+                free(winmm_midi_device);
+                winmm_midi_device = NULL;
+            }
+        }
+    }
+
+    if (winmm_midi_device == NULL)
+    {
+        MidiDevice = MIDI_MAPPER;
+        mmr = midiOutGetDevCaps(MIDI_MAPPER, &mcaps, sizeof(mcaps));
+        if (mmr == MMSYSERR_NOERROR)
+        {
+            winmm_midi_device = M_StringDuplicate(mcaps.szPname);
+        }
+    }
 
     mmr = midiStreamOpen(&hMidiStream, &MidiDevice, (DWORD)1,
                          (DWORD_PTR)MidiStreamProc, (DWORD_PTR)NULL,
@@ -366,19 +466,22 @@ boolean I_WIN_InitMusic(void)
     hBufferReturnEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
     hExitEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
+    winmm_reverb_level = BETWEEN(REVERB_MIN, REVERB_MAX, winmm_reverb_level);
+    winmm_chorus_level = BETWEEN(CHORUS_MIN, CHORUS_MAX, winmm_chorus_level);
+    ResetDevice();
+
     return true;
 }
 
 void I_WIN_SetMusicVolume(int volume)
 {
-    volume_factor = (float)volume / 127;
+    volume_factor = sqrt((float)volume / 120);
 
     UpdateVolume();
 }
 
 void I_WIN_StopSong(void)
 {
-    int i;
     MMRESULT mmr;
 
     if (hPlayerThread)
@@ -390,28 +493,7 @@ void I_WIN_StopSong(void)
         hPlayerThread = NULL;
     }
 
-    for (i = 0; i < MIDI_CHANNELS_PER_TRACK; ++i)
-    {
-        DWORD msg = 0;
-
-        // RPN sequence to adjust pitch bend range (RPN value 0x0000)
-        msg = MIDI_EVENT_CONTROLLER | i | 0x65 << 8 | 0x00 << 16;
-        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
-        msg = MIDI_EVENT_CONTROLLER | i | 0x64 << 8 | 0x00 << 16;
-        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
-
-        // reset pitch bend range to central tuning +/- 2 semitones and 0 cents
-        msg = MIDI_EVENT_CONTROLLER | i | 0x06 << 8 | 0x02 << 16;
-        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
-        msg = MIDI_EVENT_CONTROLLER | i | 0x26 << 8 | 0x00 << 16;
-        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
-
-        // end of RPN sequence
-        msg = MIDI_EVENT_CONTROLLER | i | 0x64 << 8 | 0x7F << 16;
-        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
-        msg = MIDI_EVENT_CONTROLLER | i | 0x65 << 8 | 0x7F << 16;
-        midiOutShortMsg((HMIDIOUT)hMidiStream, msg);
-    }
+    ResetDevice();
 
     mmr = midiStreamStop(hMidiStream);
     if (mmr != MMSYSERR_NOERROR)
@@ -442,6 +524,28 @@ void I_WIN_PlaySong(boolean looping)
     }
 
     UpdateVolume();
+}
+
+void I_WIN_PauseSong(void)
+{
+    MMRESULT mmr;
+
+    mmr = midiStreamPause(hMidiStream);
+    if (mmr != MMSYSERR_NOERROR)
+    {
+        MidiErrorMessageBox(mmr);
+    }
+}
+
+void I_WIN_ResumeSong(void)
+{
+    MMRESULT mmr;
+
+    mmr = midiStreamRestart(hMidiStream);
+    if (mmr != MMSYSERR_NOERROR)
+    {
+        MidiErrorMessageBox(mmr);
+    }
 }
 
 boolean I_WIN_RegisterSong(char *filename)
@@ -517,6 +621,7 @@ void I_WIN_ShutdownMusic(void)
     MMRESULT mmr;
 
     I_WIN_StopSong();
+    I_WIN_UnRegisterSong();
 
     mmr = midiOutUnprepareHeader((HMIDIOUT)hMidiStream, hdr, sizeof(MIDIHDR));
     if (mmr != MMSYSERR_NOERROR)

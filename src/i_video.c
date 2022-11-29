@@ -18,6 +18,7 @@
 
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "SDL.h"
 #include "SDL_opengl.h"
@@ -28,8 +29,6 @@
 #endif
 #include <windows.h>
 #endif
-
-#include "icon.c"
 
 #include "config.h"
 #include "d_loop.h"
@@ -200,6 +199,11 @@ int usegamma = 0;
 
 // Joystick/gamepad hysteresis
 unsigned int joywait = 0;
+
+// Icon RGB data and dimensions
+static const unsigned int *icon_data;
+static int icon_w;
+static int icon_h;
 
 static boolean MouseShouldBeGrabbed()
 {
@@ -411,8 +415,6 @@ static void I_ToggleFullScreen(void)
 
 void I_GetEvent(void)
 {
-    extern void I_HandleKeyboardEvent(SDL_Event *sdlevent);
-    extern void I_HandleMouseEvent(SDL_Event *sdlevent);
     SDL_Event sdlevent;
 
     SDL_PumpEvents();
@@ -889,6 +891,13 @@ void I_InitWindowTitle(void)
     free(buf);
 }
 
+void I_RegisterWindowIcon(const unsigned int *icon, int width, int height)
+{
+    icon_data = icon;
+    icon_w = width;
+    icon_h = height;
+}
+
 // Set the application icon
 
 void I_InitWindowIcon(void)
@@ -897,8 +906,8 @@ void I_InitWindowIcon(void)
 
     surface = SDL_CreateRGBSurfaceFrom((void *) icon_data, icon_w, icon_h,
                                        32, icon_w * 4,
-                                       0xff << 24, 0xff << 16,
-                                       0xff << 8, 0xff << 0);
+                                       0xffu << 24, 0xffu << 16,
+                                       0xffu << 8, 0xffu << 0);
 
     SDL_SetWindowIcon(screen, surface);
     SDL_FreeSurface(surface);

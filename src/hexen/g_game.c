@@ -34,12 +34,9 @@
 
 // External functions
 
-extern void R_InitSky(int map);
-extern void P_PlayerNextArtifact(player_t * player);
 
 // Functions
 
-boolean G_CheckDemoStatus(void);
 void G_ReadDemoTiccmd(ticcmd_t * cmd);
 void G_WriteDemoTiccmd(ticcmd_t * cmd);
 
@@ -59,7 +56,6 @@ void G_DoSingleReborn(void);
 void H2_PageTicker(void);
 void H2_AdvanceDemo(void);
 
-extern boolean mn_SuicideConsole;
 
 gameaction_t gameaction;
 gamestate_t gamestate;
@@ -144,7 +140,6 @@ static int next_weapon = 0;
 
 #define SLOWTURNTICS    6
 
-#define NUMKEYS 256
 boolean gamekeydown[NUMKEYS];
 int turnheld;                   // for accelerative turning
 int lookheld;
@@ -193,7 +188,6 @@ int testcontrols_mousespeed;
 ====================
 */
 
-extern boolean inventory;
 boolean usearti = true;
 
 void G_BuildTiccmd(ticcmd_t *cmd, int maketic)
@@ -205,8 +199,6 @@ void G_BuildTiccmd(ticcmd_t *cmd, int maketic)
     int look, arti;
     int flyheight;
     int pClass;
-
-    extern boolean artiskip;
 
     // haleyjd: removed externdriver crap
 
@@ -229,7 +221,8 @@ void G_BuildTiccmd(ticcmd_t *cmd, int maketic)
     speed = key_speed >= NUMKEYS
         || joybspeed >= MAX_JOY_BUTTONS
         || gamekeydown[key_speed]
-        || joybuttons[joybspeed];
+        || joybuttons[joybspeed]
+        || mousebuttons[mousebspeed];
 
     // haleyjd: removed externdriver crap
     
@@ -360,13 +353,14 @@ void G_BuildTiccmd(ticcmd_t *cmd, int maketic)
         look = TOCENTER;
     }
     // Use artifact key
-    if (gamekeydown[key_useartifact])
+    if (gamekeydown[key_useartifact] || mousebuttons[mousebuseartifact])
     {
         if (gamekeydown[key_speed] && artiskip)
         {
             if (players[consoleplayer].inventory[inv_ptr].type != arti_none)
             {                   // Skip an artifact
                 gamekeydown[key_useartifact] = false;
+                mousebuttons[mousebuseartifact] = false;
                 P_PlayerNextArtifact(&players[consoleplayer]);
             }
         }
@@ -743,9 +737,70 @@ static void SetJoyButtons(unsigned int buttons_mask)
     }
 }
 
+// If an InventoryMove*() function is called when the inventory is not active,
+// it will instead activate the inventory without attempting to change the
+// selected item. This action is indicated by a return value of false.
+// Otherwise, it attempts to change items and will return a value of true.
+
+static boolean InventoryMoveLeft()
+{
+    inventoryTics = 5 * 35;
+    if (!inventory)
+    {
+        inventory = true;
+        return false;
+    }
+    inv_ptr--;
+    if (inv_ptr < 0)
+    {
+        inv_ptr = 0;
+    }
+    else
+    {
+        curpos--;
+        if (curpos < 0)
+        {
+            curpos = 0;
+        }
+    }
+    return true;
+}
+
+static boolean InventoryMoveRight()
+{
+    player_t *plr;
+
+    plr = &players[consoleplayer];
+    inventoryTics = 5 * 35;
+    if (!inventory)
+    {
+        inventory = true;
+        return false;
+    }
+    inv_ptr++;
+    if (inv_ptr >= plr->inventorySlotNum)
+    {
+        inv_ptr--;
+        if (inv_ptr < 0)
+            inv_ptr = 0;
+    }
+    else
+    {
+        curpos++;
+        if (curpos > 6)
+        {
+            curpos = 6;
+        }
+    }
+    return true;
+}
+
 static void SetMouseButtons(unsigned int buttons_mask)
 {
     int i;
+    player_t *plr;
+
+    plr = &players[consoleplayer];
 
     for (i=0; i<MAX_MOUSE_BUTTONS; ++i)
     {
@@ -762,6 +817,22 @@ static void SetMouseButtons(unsigned int buttons_mask)
             else if (i == mousebnextweapon)
             {
                 next_weapon = 1;
+            }
+            else if (i == mousebinvleft)
+            {
+                InventoryMoveLeft();
+            }
+            else if (i == mousebinvright)
+            {
+                InventoryMoveRight();
+            }
+            else if (i == mousebuseartifact)
+            {
+                if (!inventory)
+                {
+                    plr->readyArtifact = plr->inventory[inv_ptr].type;
+                }
+                usearti = true;
             }
         }
 
@@ -782,7 +853,6 @@ static void SetMouseButtons(unsigned int buttons_mask)
 boolean G_Responder(event_t * ev)
 {
     player_t *plr;
-    extern boolean MenuActive;
 
     plr = &players[consoleplayer];
     if (ev->type == ev_keyup && ev->data1 == key_useartifact)
@@ -846,51 +916,19 @@ boolean G_Responder(event_t * ev)
         case ev_keydown:
             if (ev->data1 == key_invleft)
             {
-                inventoryTics = 5 * 35;
-                if (!inventory)
+                if (InventoryMoveLeft())
                 {
-                    inventory = true;
-                    break;
+                    return (true);
                 }
-                inv_ptr--;
-                if (inv_ptr < 0)
-                {
-                    inv_ptr = 0;
-                }
-                else
-                {
-                    curpos--;
-                    if (curpos < 0)
-                    {
-                        curpos = 0;
-                    }
-                }
-                return (true);
+                break;
             }
             if (ev->data1 == key_invright)
             {
-                inventoryTics = 5 * 35;
-                if (!inventory)
+                if (InventoryMoveRight())
                 {
-                    inventory = true;
-                    break;
+                    return (true);
                 }
-                inv_ptr++;
-                if (inv_ptr >= plr->inventorySlotNum)
-                {
-                    inv_ptr--;
-                    if (inv_ptr < 0)
-                        inv_ptr = 0;
-                }
-                else
-                {
-                    curpos++;
-                    if (curpos > 6)
-                    {
-                        curpos = 6;
-                    }
-                }
-                return (true);
+                break;
             }
             if (ev->data1 == key_pause && !MenuActive)
             {
