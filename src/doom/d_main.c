@@ -1174,7 +1174,8 @@ static void D_Endoom(void)
     // game has actually started.
 
     if (!show_endoom || !main_loop_started
-     || screensaver_mode || M_CheckParm("-testcontrols") > 0)
+     || screensaver_mode || M_CheckParm("-testcontrols") > 0
+     || M_CheckParm("-noendoom") > 0)
     {
         return;
     }
