@@ -91,7 +91,10 @@ void S_StartSong(int song, boolean loop)
     {
         return;
     }
-    mus_lumpnum = W_GetNumForName(S_music[song].name);
+    mus_lumpnum = W_CheckNumForName(S_music2[song].name);
+    if (mus_lumpnum < 0) {
+        mus_lumpnum = W_GetNumForName(S_music[song].name);
+    }
     mus_sndptr = W_CacheLumpNum(mus_lumpnum, PU_MUSIC);
     mus_len = W_LumpLength(mus_lumpnum);
     rs = I_RegisterSong(mus_sndptr, mus_len);
