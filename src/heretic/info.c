@@ -1241,7 +1241,8 @@ state_t states[NUMSTATES] = {
     {SPR_AMB2, 1, 4, NULL, S_AMB2_3, 0, 0},     // S_AMB2_2
     {SPR_AMB2, 2, 4, NULL, S_AMB2_1, 0, 0},     // S_AMB2_3
     {SPR_AMG1, 0, 100, A_ESound, S_SND_WIND, 0, 0},     // S_SND_WIND
-    {SPR_AMG1, 0, 85, A_ESound, S_SND_WATERFALL, 0, 0}  // S_SND_WATERFALL
+    {SPR_AMG1, 0, 85, A_ESound, S_SND_WATERFALL, 0, 0},  // S_SND_WATERFALL
+    {SPR_IMPX, 0, 10, A_JrraWandRedeem, S_JRRAWANDREDEEM, 0, 0}  // S_JRRAWANDREDEEM
 };
 
 
@@ -5596,5 +5597,32 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
      sfx_None,                  // activesound
      MF_NOBLOCKMAP | MF_NOSECTOR,       // flags
      0                          // flags2
-     }
+     },
+
+    {                           // MT_JRRAWANDREDEEM
+     -1,                        // doomednum
+     S_JRRAWANDREDEEM,          // spawnstate
+     1000,                      // spawnhealth
+     S_NULL,                    // seestate
+     sfx_None,                  // seesound
+     8,                         // reactiontime
+     sfx_None,                  // attacksound
+     S_NULL,                    // painstate
+     0,                         // painchance
+     sfx_None,                  // painsound
+     S_NULL,                    // meleestate
+     S_NULL,                    // missilestate
+     S_NULL,                    // crashstate
+     S_NULL,                    // deathstate
+     S_NULL,                    // xdeathstate
+     sfx_None,                  // deathsound
+     0,                         // speed
+     20 * FRACUNIT,             // radius
+     16 * FRACUNIT,             // height
+     100,                       // mass
+     0,                         // damage
+     sfx_None,                  // activesound
+     MF_NOBLOCKMAP | MF_NOSECTOR,       // flags
+     0                          // flags2
+     },
 };

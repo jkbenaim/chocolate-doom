@@ -2709,3 +2709,38 @@ void A_UnHideThing(mobj_t * actor, player_t *player, pspdef_t *psp)
     //P_SetThingPosition(actor);
     actor->flags2 &= ~MF2_DONTDRAW;
 }
+
+void A_JrraWandRedeem(mobj_t *actor, player_t *player, pspdef_t *psp)
+{
+    mobj_t mo;
+    mobj_t *corn;
+    printf("%d\n", actor->special1.i);
+    switch (actor->special1.i++) {
+    case 0:
+	actor->special2.m = P_SpawnMobj(actor->x, actor->y, actor->z, MT_TELEGLITGEN);
+	printf("%p\n", actor->special2.m);
+        P_SetMobjState(actor, actor->info->spawnstate);
+	return;
+    case 1 ... 9:
+        return;
+    case 10:
+        if (actor->special2.m)
+            P_RemoveMobj(actor->special2.m);
+	break;
+    case 20:
+        P_RemoveMobj(actor);
+	return;
+    default:
+    }
+    mo.x = actor->x + ((P_Random() & 31 - 16) * FRACUNIT);
+    mo.y = actor->y + ((P_Random() & 31 - 16) * FRACUNIT);
+    mo.z = actor->z + 9*FRACUNIT;
+
+
+    corn = P_SpawnMobj(mo.x, mo.y, mo.z, MT_AMGWNDWIMPY);
+    corn->momx = P_SubRandom() << 8;
+    corn->momy = P_SubRandom() << 8;
+    corn->momz = FRACUNIT * 9 + (P_Random() << 10);
+    corn->flags |= MF_DROPPED;
+    corn->health = 0;
+}

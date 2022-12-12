@@ -146,6 +146,7 @@ void A_MinotaurAtk3(struct mobj_s *actor, struct player_s *player, struct pspdef
 void A_MinotaurCharge(struct mobj_s *actor, struct player_s *player, struct pspdef_s *psp);
 void A_MntrFloorFire(struct mobj_s *actor, struct player_s *player, struct pspdef_s *psp);
 void A_ESound(struct mobj_s *actor, struct player_s *player, struct pspdef_s *psp);
+void A_JrraWandRedeem(struct mobj_s *actor, struct player_s *player, struct pspdef_s *psp);
 
 #endif /* #ifndef HERETIC_P_ACTION_H */
 

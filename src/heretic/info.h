@@ -1360,6 +1360,7 @@ typedef enum
     S_AMB2_3,
     S_SND_WIND,
     S_SND_WATERFALL,
+    S_JRRAWANDREDEEM,
     NUMSTATES
 } statenum_t;
 
@@ -1547,6 +1548,7 @@ typedef enum
     MT_AMBLSRHEFTY,
     MT_SOUNDWIND,
     MT_SOUNDWATERFALL,
+    MT_JRRAWANDREDEEM,
     NUMMOBJTYPES
 } mobjtype_t;
 
