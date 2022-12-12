@@ -2714,11 +2714,9 @@ void A_JrraWandRedeem(mobj_t *actor, player_t *player, pspdef_t *psp)
 {
     mobj_t mo;
     mobj_t *corn;
-    printf("%d\n", actor->special1.i);
     switch (actor->special1.i++) {
     case 0:
 	actor->special2.m = P_SpawnMobj(actor->x, actor->y, actor->z, MT_TELEGLITGEN);
-	printf("%p\n", actor->special2.m);
         P_SetMobjState(actor, actor->info->spawnstate);
 	return;
     case 1 ... 9:
