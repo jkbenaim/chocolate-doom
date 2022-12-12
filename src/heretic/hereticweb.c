@@ -102,6 +102,33 @@ int callback_ws(const struct _u_request *request, struct _u_response *response, 
 	return U_CALLBACK_CONTINUE;
 }
 
+int callback_wad(const struct _u_request *request, struct _u_response *response, void *user_data)
+{
+	int rc;
+	const char *name;
+	void *buf;
+	size_t len;
+	lumpindex_t idx;
+
+	name = u_map_get(request->map_url, "lumpname");
+	if (!name) {
+		ulfius_set_empty_body_response(response, 400);
+		return U_CALLBACK_CONTINUE;
+	}
+
+	idx = W_CheckNumForName(name);
+	if (idx == -1) {
+		ulfius_set_empty_body_response(response, 404);
+		return U_CALLBACK_CONTINUE;
+	}
+
+	buf = malloc(W_LumpLength(idx));
+	W_ReadLump(idx, buf);
+	ulfius_set_binary_body_response(response, 200, buf, W_LumpLength(idx));
+
+	return U_CALLBACK_CONTINUE;
+}
+
 void I_HereticWebInit(void)
 {
 	int rc;
@@ -116,10 +143,19 @@ void I_HereticWebInit(void)
 	ulfius_add_endpoint_by_val(
 		&web,
 		"GET",
-		"/ws",
 		NULL,
+		"/ws",
 		0,
 		&callback_ws,
+		NULL
+	);
+	ulfius_add_endpoint_by_val(
+		&web,
+		"GET",
+		NULL,
+		"/wad/:lumpname",
+		0,
+		&callback_wad,
 		NULL
 	);
 }
