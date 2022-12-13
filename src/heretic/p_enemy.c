@@ -2725,7 +2725,7 @@ void A_JrraWandRedeem(mobj_t *actor, player_t *player, pspdef_t *psp)
         if (actor->special2.m)
             P_RemoveMobj(actor->special2.m);
 	break;
-    case 20:
+    case 15:
         P_RemoveMobj(actor);
 	return;
     default:
@@ -2740,5 +2740,5 @@ void A_JrraWandRedeem(mobj_t *actor, player_t *player, pspdef_t *psp)
     corn->momy = P_SubRandom() << 8;
     corn->momz = FRACUNIT * 9 + (P_Random() << 10);
     corn->flags |= MF_DROPPED;
-    corn->health = 0;
+    corn->health = 1; // ammo value
 }
