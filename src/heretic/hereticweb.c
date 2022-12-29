@@ -9,6 +9,7 @@
 #include <err.h>
 #include "i_system.h"
 #include "p_local.h"
+#include "s_sound.h"
 
 pthread_cond_t webcond;
 pthread_mutex_t webmutex;
@@ -104,10 +105,8 @@ int callback_ws(const struct _u_request *request, struct _u_response *response, 
 
 int callback_wad(const struct _u_request *request, struct _u_response *response, void *user_data)
 {
-	int rc;
 	const char *name;
 	void *buf;
-	size_t len;
 	lumpindex_t idx;
 
 	name = u_map_get(request->map_url, "lumpname");
