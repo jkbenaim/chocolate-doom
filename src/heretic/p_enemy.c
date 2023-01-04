@@ -2730,8 +2730,8 @@ void A_JrraWandRedeem(mobj_t *actor, player_t *player, pspdef_t *psp)
 	return;
     default:
     }
-    mo.x = actor->x + ((P_Random() & 31 - 16) * FRACUNIT);
-    mo.y = actor->y + ((P_Random() & 31 - 16) * FRACUNIT);
+    mo.x = actor->x + (((P_Random() & 31) - 16) * FRACUNIT);
+    mo.y = actor->y + (((P_Random() & 31) - 16) * FRACUNIT);
     mo.z = actor->z + 9*FRACUNIT;
 
 
