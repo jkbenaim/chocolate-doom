@@ -59,6 +59,8 @@
 #define	MELEERANGE (64*FRACUNIT)
 #define	MISSILERANGE (32*64*FRACUNIT)
 
+extern int should_redeem;
+
 typedef enum
 {
     DI_EAST,

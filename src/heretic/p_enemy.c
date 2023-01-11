@@ -2710,22 +2710,29 @@ void A_UnHideThing(mobj_t * actor, player_t *player, pspdef_t *psp)
     actor->flags2 &= ~MF2_DONTDRAW;
 }
 
+//----------------------------------------------------------------------------
+//
+// PROC A_JrraWandRedeem
+//
+//----------------------------------------------------------------------------
+
 void A_JrraWandRedeem(mobj_t *actor, player_t *player, pspdef_t *psp)
 {
     mobj_t mo;
     mobj_t *corn;
     switch (actor->special1.i++) {
     case 0:
-	actor->special2.m = P_SpawnMobj(actor->x, actor->y, actor->z, MT_TELEGLITGEN);
-        P_SetMobjState(actor, actor->info->spawnstate);
+	actor->special2.m = P_SpawnMobj(actor->x, actor->y, actor->z, MT_TELEGLITGEN2);
+	P_SpawnMobj(actor->x, actor->y, actor->z + TELEFOGHEIGHT, MT_TFOG);
+        S_StartSound(actor->special2.m, sfx_chat);
 	return;
-    case 1 ... 9:
+    case 1 ... 19:
         return;
-    case 10:
+    case 20:
         if (actor->special2.m)
             P_RemoveMobj(actor->special2.m);
 	break;
-    case 15:
+    case 25:
         P_RemoveMobj(actor);
 	return;
     default:
@@ -2736,8 +2743,8 @@ void A_JrraWandRedeem(mobj_t *actor, player_t *player, pspdef_t *psp)
 
 
     corn = P_SpawnMobj(mo.x, mo.y, mo.z, MT_AMGWNDWIMPY);
-    corn->momx = P_SubRandom() << 8;
-    corn->momy = P_SubRandom() << 8;
+    corn->momx = P_SubRandom() << 9;
+    corn->momy = P_SubRandom() << 9;
     corn->momz = FRACUNIT * 9 + (P_Random() << 10);
     corn->flags |= MF_DROPPED;
     corn->health = 1; // ammo value

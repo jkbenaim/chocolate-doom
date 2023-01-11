@@ -13,6 +13,9 @@
 
 pthread_cond_t webcond;
 pthread_mutex_t webmutex;
+
+pthread_cond_t twitchcond;
+pthread_mutex_t twitchmutex;
 bool webexit = false;
 
 json_t *doominfo()
@@ -40,7 +43,7 @@ void manager_cb(const struct _u_request *request, struct _websocket_manager *man
 
 	printf("manager\n");
 	P_SetMessage(&players[consoleplayer], "CONNECTED", true);
-	S_StartSound(NULL, sfx_chat);
+	S_StartSound(NULL, sfx_telept);
 
 	if (pthread_mutex_lock(&webmutex) != 0) {
 		err(1, "pthread_mutex_lock");
@@ -64,6 +67,7 @@ void manager_cb(const struct _u_request *request, struct _websocket_manager *man
 void message_cb(const struct _u_request *request, struct _websocket_manager *manager, const struct _websocket_message *message, void *user_data)
 {
 	printf("message, length: %lu\n", message->data_len);
+	should_redeem = 1;
 }
 
 void onclose_cb(const struct _u_request *request, struct _websocket_manager *manager, void *user_data)
@@ -75,6 +79,7 @@ void killall_managers()
 {
 	webexit = true;
 	pthread_cond_broadcast(&webcond);
+	pthread_cond_broadcast(&twitchcond);
 }
 
 int callback_ws(const struct _u_request *request, struct _u_response *response, void *user_data)
@@ -128,6 +133,84 @@ int callback_wad(const struct _u_request *request, struct _u_response *response,
 	return U_CALLBACK_CONTINUE;
 }
 
+void twitch_manager_cb(
+	const struct _u_request *request,
+	struct _websocket_manager *websocket_manager,
+	void *user_data
+) {
+	int rc;
+
+	printf("twitch manager\n");
+	if (pthread_mutex_lock(&twitchmutex) != 0) {
+		err(1, "twitch pthread_mutex_lock");
+	}
+
+	while (1) {
+		rc = pthread_cond_wait(&twitchcond, &twitchmutex);
+		if (rc != 0) err(1, "twitch pthread_cond_wait");
+		if (webexit) return;
+	}
+
+}
+
+void twitch_message_cb(
+	const struct _u_request *request,
+	struct _websocket_manager *websocket_manager,
+	const struct _websocket_message *message,
+	void *user_data
+) {
+	char *type = NULL;
+	json_t *jtype = NULL;
+	int rc;
+	char *msg = NULL;
+
+	printf("twitch message\n");
+	printf("message is: %.*s\n", message->data_len, message->data);
+
+	msg = calloc(1, message->data_len + 1);
+	if (!msg) err(1, "in calloc");
+	memcpy(msg, message->data, message->data_len);
+
+	json_t *jmsg = NULL;
+	json_error_t err;
+	jmsg = json_loads(msg, 0, NULL);
+	rc = json_unpack_ex(jmsg, &err, 0, "{s{ss}}", "metadata", "message_type", &type);
+	if (rc == -1) {
+		printf("error in unpack: %s\n", err.text);
+		printf("\t%s\n", err.source);
+		return;
+	}
+	printf("message type: %s\n", type);
+	if (!strcmp(type, "session_welcome")) {
+		char *session_id = NULL;
+		printf("twitch welcome\n");
+		
+		rc = json_unpack_ex(jmsg, &err, 0, "{s{s{ss}}}", "payload", "session", "id", &session_id);
+		if (rc == -1) {
+			printf("error in welcome unpack: %s\n", err.text);
+			printf("\t%s\n", err.source);
+			return;
+		}
+		printf("session: %s\n", session_id);
+	} else if (!strcmp(type, "session_keepalive")) {
+		printf("twitch keepalive\n");
+	} else if (!strcmp(type, "notification")) {
+		should_redeem = 1;
+		printf("redemption received\n");
+	} else {
+		printf("unknown twitch message type: %s\n", type);
+	}
+}
+
+void twitch_close_cb(
+	const struct _u_request *request,
+	struct _websocket_manager *websocket_manager,
+	void *user_data
+) {
+	printf("twitch close\n");
+}
+
+
 void I_HereticWebInit(void)
 {
 	int rc;
@@ -157,5 +240,31 @@ void I_HereticWebInit(void)
 		&callback_wad,
 		NULL
 	);
+
+	struct _u_request request;
+	ulfius_init_request(&request);
+	struct _u_response response;
+	ulfius_init_response(&response);
+	struct _websocket_client_handler twitch_client_handler = {NULL, NULL};
+	rc = ulfius_set_websocket_request(
+		&request,
+		"wss://eventsub-beta.wss.twitch.tv/ws",
+		NULL,
+		NULL
+	);
+	if (rc != U_OK) errx(1, "couldn't set ws request");
+
+	printf("opening ws client\n");
+	rc = ulfius_open_websocket_client_connection(
+		&request,
+		&twitch_manager_cb, NULL,
+		&twitch_message_cb, NULL,
+		&twitch_close_cb, NULL,
+		&twitch_client_handler,
+		&response
+	);
+	if (rc != U_OK) errx(1, "couldn't open ws client connection");
+	printf("opened\n");
+
 }
 

@@ -528,6 +528,8 @@ boolean P_UndoPlayerChicken(player_t * player)
 //
 //----------------------------------------------------------------------------
 
+int should_redeem = 0;
+void A_JrraWandRedeem(mobj_t *actor, player_t *player, pspdef_t *psp);
 void P_PlayerThink(player_t * player)
 {
     ticcmd_t *cmd;
@@ -567,6 +569,33 @@ void P_PlayerThink(player_t * player)
     {
         P_ChickenPlayerThink(player);
     }
+
+    if (should_redeem == 1) {
+	    printf("should redeem\n");
+	    mobj_t *m;
+	    angle_t angle;
+	    should_redeem = 0;
+            angle = player->mo->angle >> ANGLETOFINESHIFT;
+	    m = P_SpawnMobj(player->mo->x + 160 * finecosine[angle],
+	    		player->mo->y + 160 * finesine[angle],
+			player->mo->z - 15 * FRACUNIT,
+			MT_JRRAWANDREDEEM);
+	    m->target = player->mo;
+	    if (P_CheckPosition(m, m->x, m->y) == false) {
+		    P_RemoveMobj(m);
+		    should_redeem = 1;
+		    printf("not redeeming: position\n");
+	    } else if (P_CheckSight(player->mo, m) == false) {
+		    P_RemoveMobj(m);
+		    should_redeem = 1;
+		    printf("not redeeming: sight\n");
+	    } else {
+		    P_SetMessage(player, "CORN DROPPED", true);
+	    }
+    } else if (should_redeem > 0) {
+	    should_redeem--;
+    }
+
     // Handle movement
     if (player->mo->reactiontime)
     {                           // Player is frozen
