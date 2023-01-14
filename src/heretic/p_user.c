@@ -529,6 +529,9 @@ boolean P_UndoPlayerChicken(player_t * player)
 //----------------------------------------------------------------------------
 
 int should_redeem = 0;
+#define SPAWN_RELOAD (10)
+int spawn_threshold = SPAWN_RELOAD;
+int twitch_enabled = 1;
 void A_JrraWandRedeem(mobj_t *actor, player_t *player, pspdef_t *psp);
 void P_PlayerThink(player_t * player)
 {
@@ -570,30 +573,35 @@ void P_PlayerThink(player_t * player)
         P_ChickenPlayerThink(player);
     }
 
-    if (should_redeem == 1) {
-	    printf("should redeem\n");
+    if (twitch_enabled) {
 	    mobj_t *m;
 	    angle_t angle;
-	    should_redeem = 0;
-            angle = player->mo->angle >> ANGLETOFINESHIFT;
+	    angle = player->mo->angle >> ANGLETOFINESHIFT;
 	    m = P_SpawnMobj(player->mo->x + 160 * finecosine[angle],
-	    		player->mo->y + 160 * finesine[angle],
+			player->mo->y + 160 * finesine[angle],
 			player->mo->z - 15 * FRACUNIT,
 			MT_JRRAWANDREDEEM);
 	    m->target = player->mo;
 	    if (P_CheckPosition(m, m->x, m->y) == false) {
 		    P_RemoveMobj(m);
-		    should_redeem = 1;
-		    printf("not redeeming: position\n");
+		    spawn_threshold = SPAWN_RELOAD;
+		    //printf("not redeeming: position\n");
 	    } else if (P_CheckSight(player->mo, m) == false) {
 		    P_RemoveMobj(m);
-		    should_redeem = 1;
-		    printf("not redeeming: sight\n");
+		    spawn_threshold = SPAWN_RELOAD;
+		    //printf("not redeeming: sight\n");
 	    } else {
-		    P_SetMessage(player, "CORN DROPPED", true);
+		    if (spawn_threshold > 0) {
+			    P_RemoveMobj(m);
+			    spawn_threshold--;
+		    } else if (should_redeem == 0) {
+			    P_RemoveMobj(m);
+		    } else {
+			    printf("spawned\n");
+			    should_redeem = 0;
+			    spawn_threshold = SPAWN_RELOAD;
+		    }
 	    }
-    } else if (should_redeem > 0) {
-	    should_redeem--;
     }
 
     // Handle movement

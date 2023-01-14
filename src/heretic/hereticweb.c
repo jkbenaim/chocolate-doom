@@ -160,40 +160,74 @@ void twitch_message_cb(
 	void *user_data
 ) {
 	char *type = NULL;
-	json_t *jtype = NULL;
 	int rc;
 	char *msg = NULL;
+	json_t *jmsg = NULL;
+	json_error_t jerr;
 
-	printf("twitch message\n");
-	printf("message is: %.*s\n", message->data_len, message->data);
+	//printf("message is: %.*s\n", (int)message->data_len, message->data);
 
 	msg = calloc(1, message->data_len + 1);
 	if (!msg) err(1, "in calloc");
 	memcpy(msg, message->data, message->data_len);
 
-	json_t *jmsg = NULL;
-	json_error_t err;
 	jmsg = json_loads(msg, 0, NULL);
-	rc = json_unpack_ex(jmsg, &err, 0, "{s{ss}}", "metadata", "message_type", &type);
+	rc = json_unpack_ex(jmsg, &jerr, 0, "{s{ss}}", "metadata", "message_type", &type);
 	if (rc == -1) {
-		printf("error in unpack: %s\n", err.text);
-		printf("\t%s\n", err.source);
+		printf("error in unpack: %s\n", jerr.text);
+		printf("\t%s\n", jerr.source);
 		return;
 	}
-	printf("message type: %s\n", type);
 	if (!strcmp(type, "session_welcome")) {
 		char *session_id = NULL;
+		struct _u_request req;
+		struct _u_response resp;
+		json_t *subbody = NULL;
+		json_t *transport = NULL;
+
 		printf("twitch welcome\n");
 		
-		rc = json_unpack_ex(jmsg, &err, 0, "{s{s{ss}}}", "payload", "session", "id", &session_id);
+		rc = json_unpack_ex(jmsg, &jerr, 0, "{s{s{ss}}}", "payload", "session", "id", &session_id);
 		if (rc == -1) {
-			printf("error in welcome unpack: %s\n", err.text);
-			printf("\t%s\n", err.source);
+			printf("error in welcome unpack: %s\n", jerr.text);
+			printf("\t%s\n", jerr.source);
 			return;
 		}
-		printf("session: %s\n", session_id);
+
+		if (!getenv("CHOCO_AUTH")) errx(1, "CHOCO_AUTH not set");
+		if (!getenv("CHOCO_CID")) errx(1, "CHOCO_CID not set");
+
+		rc = ulfius_init_request(&req);
+		if (rc != U_OK) errx(1, "couldn't init sub request");
+
+		rc = ulfius_set_request_properties(
+			&req,
+			U_OPT_HTTP_VERB, "POST",
+			U_OPT_HTTP_URL, "https://api.twitch.tv/helix/eventsub/subscriptions",
+			U_OPT_HEADER_PARAMETER, "Content-Type", "application/json",
+			U_OPT_HEADER_PARAMETER, "Authorization", getenv("CHOCO_AUTH"),	// FIXME
+			U_OPT_HEADER_PARAMETER, "Client-Id", getenv("CHOCO_CID"),	// FIXME
+			U_OPT_NONE
+		);
+		if (rc != U_OK) errx(1, "couldn't set sub request properties");
+
+		subbody = json_loads("{\"type\":\"channel.channel_points_custom_reward_redemption.add\",\"version\":\"1\",\"condition\":{\"broadcaster_user_id\":\"44201757\"},\"transport\":{\"method\":\"websocket\"}}", 0, NULL);
+		if (!subbody) errx(1, "couldn't json_loads");
+
+		rc = json_unpack(subbody, "{so}", "transport", &transport);
+		if (rc == -1) errx(1, "couldn't json_unpack for transport");
+		rc = json_object_set(transport, "session_id", json_string(session_id));
+		if (rc == -1) errx(1, "couldn't set session_id");
+
+		rc = ulfius_set_json_body_request(&req, subbody);
+		if (rc != U_OK) errx(1, "couldn't set sub request json body");
+
+		rc = ulfius_init_response(&resp);
+		if (rc != U_OK) errx(1, "couldn't init sub response");
+		rc = ulfius_send_http_request(&req, &resp);
+		if (rc != U_OK) errx(1, "couldn't send sub request");
 	} else if (!strcmp(type, "session_keepalive")) {
-		printf("twitch keepalive\n");
+		//printf("twitch keepalive\n");
 	} else if (!strcmp(type, "notification")) {
 		should_redeem = 1;
 		printf("redemption received\n");
@@ -214,6 +248,10 @@ void twitch_close_cb(
 void I_HereticWebInit(void)
 {
 	int rc;
+	struct _u_request request;
+	struct _u_response response;
+	struct _websocket_client_handler twitch_client_handler = {NULL, NULL};
+
 	rc = pthread_mutex_init(&webmutex, NULL);
 	if (rc != 0) err(1, "couldn't create pthread mutex");
 	rc = pthread_cond_init(&webcond, NULL);
@@ -241,11 +279,8 @@ void I_HereticWebInit(void)
 		NULL
 	);
 
-	struct _u_request request;
 	ulfius_init_request(&request);
-	struct _u_response response;
 	ulfius_init_response(&response);
-	struct _websocket_client_handler twitch_client_handler = {NULL, NULL};
 	rc = ulfius_set_websocket_request(
 		&request,
 		"wss://eventsub-beta.wss.twitch.tv/ws",
