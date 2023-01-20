@@ -338,7 +338,7 @@ void jrra_report(int logical_gamemission, int episode, int map)
     free(jrra_info.prettymapnum);
     jrra_info.prettymapnum = strdup(prettymapnum);
     free(jrra_info.mapname);
-    jrra_info.mapname = strdup(mapname);
+    jrra_info.mapname = strdup(mapname?:"");
     jrra_info.valid = 1;
 
 out_fclose:
