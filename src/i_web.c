@@ -1,6 +1,5 @@
 #include <ulfius.h>
 #include "i_web.h"
-#include "jrra_report.h"
 #include <sys/stat.h>
 
 struct _u_instance web;
@@ -44,39 +43,39 @@ int callback_application(const struct _u_request *request, struct _u_response *r
 
 int I_WebInit(void)
 {
-	int port = 8080;
-	if (ulfius_init_instance(&web, port, NULL, NULL) != U_OK) {
-		printf("failure in ulfius_init_instance\n");
-		return -1;
-	}
+    int port = 8080;
+    if (ulfius_init_instance(&web, port, NULL, NULL) != U_OK) {
+        printf("failure in ulfius_init_instance\n");
+        return -1;
+    }
 
-	ulfius_add_endpoint_by_val(
-		&web,
-		"GET",
-		"/",
-		NULL,
-		0,
-		&callback_application,
-		NULL
-	);
+    ulfius_add_endpoint_by_val(
+        &web,
+        "GET",
+        "/",
+        NULL,
+        0,
+        &callback_application,
+        NULL
+    );
 
-	for (port = 8080; port < 8090; port++) {
-		web.port = port;
-		if (ulfius_start_framework(&web) == U_OK) {
-			break;
-		}
-	}
-	if (port == 8090) {
-		printf("couldn't start ulfius\n");
-		return -1;
-	}
-	printf("web ok: http://localhost:%d\n", port);
-	return 0;
+    for (port = 8080; port < 8090; port++) {
+        web.port = port;
+        if (ulfius_start_framework(&web) == U_OK) {
+            break;
+        }
+    }
+    if (port == 8090) {
+        printf("couldn't start ulfius\n");
+        return -1;
+    }
+    printf("web ok: http://localhost:%d\n", port);
+    return 0;
 }
 
 void I_WebDestroy(void)
 {
-	// clean up web server
-	ulfius_stop_framework(&web);
-	ulfius_clean_instance(&web);
+    // clean up web server
+    ulfius_stop_framework(&web);
+    ulfius_clean_instance(&web);
 }

@@ -3,9 +3,9 @@
 
 struct jrra_info_s {
     int valid;
-	int mission;
-	int episode;
-	int map;
+    int mission;
+    int episode;
+    int map;
     char *prettygamename;
     char *prettymapnum;
     char *mapname;
