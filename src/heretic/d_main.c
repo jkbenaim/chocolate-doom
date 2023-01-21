@@ -48,7 +48,7 @@
 
 #include "heretic_icon.c"
 
-#include "hereticweb.h"
+#include "i_web.h"
 
 #define CT_KEY_GREEN    'g'
 #define CT_KEY_YELLOW   'y'
@@ -1169,7 +1169,7 @@ void D_DoomMain(void)
 
     finishStartup();
 
-    I_HereticWebInit();
+    I_WebInit();
 
     D_DoomLoop();               // Never returns
 }

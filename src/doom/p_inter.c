@@ -39,6 +39,8 @@
 
 #include "p_inter.h"
 
+#include "i_web.h"
+
 
 #define BONUSADD	6
 
@@ -690,8 +692,10 @@ P_KillMobj
     if (source && source->player)
     {
 	// count for intermission
-	if (target->flags & MF_COUNTKILL)
-	    source->player->killcount++;	
+	if (target->flags & MF_COUNTKILL) {
+	    source->player->killcount++;
+        I_WebUpdateKillcount(players[0].killcount);
+    }
 
 	if (target->player)
 	    source->player->frags[target->player-players]++;
@@ -701,6 +705,7 @@ P_KillMobj
 	// count all monster deaths,
 	// even those caused by other monsters
 	players[0].killcount++;
+    I_WebUpdateKillcount(players[0].killcount);
     }
     
     if (target->player)

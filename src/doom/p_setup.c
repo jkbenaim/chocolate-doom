@@ -41,7 +41,7 @@
 
 #include "doomstat.h"
 
-#include "jrra_report.h"
+#include "i_web.h"
 
 void	P_SpawnMapThing (mapthing_t*	mthing);
 
@@ -780,8 +780,6 @@ P_SetupLevel
     int		lumpnum;
 
 
-    jrra_report(logical_gamemission, episode, map);
-	
     totalkills = totalitems = totalsecret = wminfo.maxfrags = 0;
     wminfo.partime = 180;
     for (i=0 ; i<MAXPLAYERS ; i++)
@@ -872,7 +870,7 @@ P_SetupLevel
 	R_PrecacheLevel ();
 
     //printf ("free memory: 0x%x\n", Z_FreeMemory());
-
+    I_WebNewLevel(gamemission, episode, map, totalkills, totalsecret);
 }
 
 

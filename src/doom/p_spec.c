@@ -47,6 +47,7 @@
 // Data.
 #include "sounds.h"
 
+#include "i_web.h"
 
 //
 // Animating textures and planes
@@ -1069,6 +1070,9 @@ void P_PlayerInSpecialSector (player_t* player)
 	// SECRET SECTOR
 	player->secretcount++;
 	sector->special = 0;
+    I_WebUpdateSecretcount(player->secretcount);
+    player->message = "A SECRET IS REVEALED!";
+    S_StartSound(NULL, sfx_radio);
 	break;
 			
       case 11:

@@ -28,7 +28,7 @@
 #include "s_sound.h"
 #include "p_local.h"
 
-#include "jrra_report.h"
+#include "i_web.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -674,8 +674,6 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
     int lumpnum;
     mobj_t *mobj;
 
-    jrra_report(hexen, episode, map);
-
     for (i = 0; i < maxplayers; i++)
     {
         players[i].killcount = players[i].secretcount
@@ -784,6 +782,8 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
     S_StartSong(gamemap, true);
 
 //printf ("free memory: 0x%x\n", Z_FreeMemory());
+
+    I_WebNewLevel(hexen, 1, map, 0, 0);
 
 }
 

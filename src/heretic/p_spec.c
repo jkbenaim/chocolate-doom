@@ -24,7 +24,7 @@
 #include "p_local.h"
 #include "s_sound.h"
 #include "v_video.h"
-#include "hereticweb.h"
+#include "i_web.h"
 
 // Macros
 
@@ -890,9 +890,9 @@ void P_PlayerInSpecialSector(player_t * player)
         case 9:                // SecretArea
             player->secretcount++;
             sector->special = 0;
-	    pthread_cond_broadcast(&webcond);
-	    P_SetMessage(&players[consoleplayer], "A SECRET IS REVEALED!", true);
-	    S_StartSound(NULL, sfx_chat);
+            I_WebUpdateSecretcount(player->secretcount);
+            P_SetMessage(&players[consoleplayer], "A SECRET IS REVEALED!", true);
+            S_StartSound(NULL, sfx_chat);
             break;
         case 11:               // Exit_SuperDamage (DOOM E1M8 finale)
             /*

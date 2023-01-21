@@ -26,7 +26,7 @@
 #include "am_map.h"
 
 
-#include "hereticweb.h"
+#include "i_web.h"
 
 #define BONUSADD 6
 
@@ -898,9 +898,7 @@ void P_KillMobj(mobj_t * source, mobj_t * target)
         if (target->flags & MF_COUNTKILL)
         {                       // Count for intermission
             source->player->killcount++;
-	    if (pthread_cond_broadcast(&webcond) != 0) {
-		    printf("broadcast error\n");
-	    }
+            I_WebUpdateKillcount(source->player->killcount);
         }
         if (target->player)
         {                       // Frag stuff

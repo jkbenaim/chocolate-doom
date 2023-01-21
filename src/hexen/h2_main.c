@@ -45,6 +45,8 @@
 
 #include "hexen_icon.c"
 
+#include "i_web.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define MAXWADFILES 20
@@ -520,6 +522,8 @@ void D_DoomMain(void)
     }
 
     CheckRecordFrom();
+
+    I_WebInit();
 
     //!
     // @arg <x>

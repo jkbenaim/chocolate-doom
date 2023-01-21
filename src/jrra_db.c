@@ -5,16 +5,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "i_system.h"
 #include "d_mode.h"
-#include "jrra_report.h"
+#include "jrra_db.h"
 
 sqlite3 *db;
-bool jrra_did_register_atexit = false;
 const char *jrra_db_path = "/home/jason/d/doom/maps.db";
-const char *jrra_report_txt_path = "/tmp/jrra_report.txt";
-
-struct jrra_info_s jrra_info = {0};
 
 /*
  *  some wordwrap stuff
@@ -273,29 +268,15 @@ char *jrra_get_prettymapnum(int logical_gamemission, int episode, int map)
     return prettymapnum;
 }
 
-void jrra_atexit()
+void jrra_report(struct jrra_info_s *jrra_info)
 {
-    FILE *f = fopen(jrra_report_txt_path, "w");
-    if (f) {
-        fprintf(f, "\n\n\n ");
-        fclose(f);
-    }
-}
-
-void jrra_report(int logical_gamemission, int episode, int map)
-{
-    __label__ out_return, out_free, out_fclose;
+    __label__ out_return;
     int rc;
     char *zErr = NULL;
 
     char *mapname = NULL;
     char *prettygamename = NULL;
     char *prettymapnum = NULL;
-    FILE *f = NULL;
-
-    if (!jrra_did_register_atexit) {
-        I_AtExit(jrra_atexit, true);
-    }
 
     rc = DB_Open(jrra_db_path);
     if (!rc) {
@@ -303,43 +284,19 @@ void jrra_report(int logical_gamemission, int episode, int map)
         goto out_return;
     }
 
-    mapname = jrra_get_mapname(logical_gamemission, episode, map);
-    prettygamename = jrra_get_prettygamename(logical_gamemission);
-    prettymapnum = jrra_get_prettymapnum(logical_gamemission, episode, map);
+    mapname = jrra_get_mapname(jrra_info->gamemission, jrra_info->episode, jrra_info->map);
+    prettygamename = jrra_get_prettygamename(jrra_info->gamemission);
+    prettymapnum = jrra_get_prettymapnum(jrra_info->gamemission, jrra_info->episode, jrra_info->map);
 
     if (mapname) wrap(mapname, 15);
 
-    f = fopen(jrra_report_txt_path, "w");
-    if (!f) {
-        zErr = "in fopen";
-        goto out_free;
-    }
+    free(jrra_info->prettygamename);
+    jrra_info->prettygamename = strdup(prettygamename);
+    free(jrra_info->prettymapnum);
+    jrra_info->prettymapnum = strdup(prettymapnum);
+    free(jrra_info->mapname);
+    jrra_info->mapname = strdup(mapname?:"");
 
-    rc = fprintf(f, "%s \n%s%s \n%s \n ",
-        prettygamename?:"",
-        prettymapnum?:"",
-        mapname?":":"",
-        mapname?:""
-    );
-    if (rc < 0) {
-        zErr = "in fprintf";
-        goto out_fclose;
-    }
-
-    jrra_info.mission = logical_gamemission;
-    jrra_info.episode = episode;
-    jrra_info.map = map;
-    free(jrra_info.prettygamename);
-    jrra_info.prettygamename = strdup(prettygamename);
-    free(jrra_info.prettymapnum);
-    jrra_info.prettymapnum = strdup(prettymapnum);
-    free(jrra_info.mapname);
-    jrra_info.mapname = strdup(mapname?:"");
-    jrra_info.valid = 1;
-
-out_fclose:
-    fclose(f);
-out_free:
     free(mapname);
     free(prettygamename);
     free(prettymapnum);

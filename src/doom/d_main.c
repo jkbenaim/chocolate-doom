@@ -76,7 +76,7 @@
 #include "d_main.h"
 
 #include "doom_icon.c"
-#include "doomweb.h"
+#include "i_web.h"
 
 //
 // D-DoomLoop()
@@ -1997,7 +1997,7 @@ void D_DoomMain (void)
 	    D_StartTitle ();                // start up intro loop
     }
 
-    I_DoomWebInit();
+    I_WebInit();
 
     D_DoomLoop ();  // never returns
 }

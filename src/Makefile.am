@@ -116,7 +116,7 @@ w_file_stdc.c                              \
 w_file_posix.c                             \
 w_file_win32.c                             \
 w_merge.c            w_merge.h             \
-jrra_report.c	     jrra_report.h
+jrra_db.c	     jrra_db.h
 
 
 MEMORY_NATIVE_SOURCE_FILES=\
