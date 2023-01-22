@@ -6,8 +6,10 @@
 #include <ulfius.h>
 
 extern struct _u_instance web;
-extern pthread_cond_t webcond;
-extern pthread_mutex_t webmutex;
+extern pthread_mutex_t corn_mutex;
+extern int corns;
+
+#define under(mtx) for(bool _x=true;_x && !pthread_mutex_lock(mtx);_x=false,pthread_mutex_unlock(mtx))
 
 struct jrra_info_s {
     bool valid;

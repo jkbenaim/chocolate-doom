@@ -17,10 +17,10 @@ pthread_cond_t twitchcond;
 pthread_mutex_t twitchmutex;
 pthread_mutex_t infomutex;
 bool webexit = false;
+pthread_mutex_t corn_mutex;
+int corns;
 
 struct jrra_info_s jrra_info = {.valid=false};
-
-#define under(mtx) for(bool _x=true;_x && !pthread_mutex_lock(mtx);_x=false,pthread_mutex_unlock(mtx))
 
 void I_WebNewLevel(
     int gamemission,
@@ -249,7 +249,9 @@ void twitch_message_cb(
     } else if (!strcmp(type, "session_keepalive")) {
         //printf("twitch keepalive\n");
     } else if (!strcmp(type, "notification")) {
-        // should_redeem = 1;
+        under(&corn_mutex) {
+            corns++;
+	}
         printf("redemption received\n");
     } else {
         printf("unknown twitch message type: %s\n", type);
@@ -347,6 +349,10 @@ int I_WebInit(void)
     if (rc != 0) err(1, "couldn't create pthread mutex");
     rc = pthread_cond_init(&webcond, NULL);
     if (rc != 0) err(1, "couldn't create pthread condition");
+
+    rc = pthread_mutex_init(&corn_mutex, NULL);
+    if (rc != 0) err(1, "couldn't create corns mutex");
+    corns = 0;
 
     I_AtExit(killall_managers, 1);
 
