@@ -102,7 +102,8 @@ set(GAME_SOURCE_FILES
     w_merge.c           w_merge.h
     z_zone.c            z_zone.h
     jrra_db.c           jrra_db.h
-    i_web.c             i_web.h)
+    i_web.c             i_web.h
+    errulfius.c         errulfius.h)
 
 set(GAME_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/../")
 

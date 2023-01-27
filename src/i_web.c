@@ -9,6 +9,7 @@
 #include <string.h>
 #include "i_system.h"
 #include "jrra_db.h"
+#include "errulfius.h"
 
 struct _u_instance web;
 pthread_cond_t webcond;
@@ -387,8 +388,8 @@ int I_WebInit(void)
             &twitch_client_handler,
             &response
         );
-        if (rc != U_OK) errx(1, "couldn't open twitch ws client connection");
-        printf("opened twitch ws\n");
+        if (rc != U_OK) warnulfius(rc, "couldn't open twitch ws client connection");
+        else printf("opened twitch ws\n");
     }
     return 0;
 }
