@@ -532,7 +532,39 @@ boolean P_UndoPlayerChicken(player_t * player)
 
 #define SPAWN_RELOAD (10)
 int spawn_threshold = SPAWN_RELOAD;
-void A_JrraWandRedeem(mobj_t *actor, player_t *player, pspdef_t *psp);
+void P_CheckRedeem(player_t *player)
+{
+    mobj_t *m;
+    angle_t angle;
+    angle = player->mo->angle >> ANGLETOFINESHIFT;
+    m = P_SpawnMobj(player->mo->x + 160 * finecosine[angle],
+        player->mo->y + 160 * finesine[angle],
+        player->mo->z - 15 * FRACUNIT,
+        MT_JRRAWANDREDEEM);
+    m->target = player->mo;
+    if (P_CheckPosition(m, m->x, m->y) == false) {
+        P_RemoveMobj(m);
+        spawn_threshold = SPAWN_RELOAD;
+    } else if (P_CheckSight(player->mo, m) == false) {
+        P_RemoveMobj(m);
+        spawn_threshold = SPAWN_RELOAD;
+    } else {
+        if (spawn_threshold > 0) {
+            P_RemoveMobj(m);
+            spawn_threshold--;
+        } else {
+	    under(&corn_mutex) {
+                if (corns > 0) {
+                    corns--;
+		    spawn_threshold = SPAWN_RELOAD;
+		} else {
+                    P_RemoveMobj(m);
+		}
+	    }
+        }
+    }
+}
+
 void P_PlayerThink(player_t * player)
 {
     ticcmd_t *cmd;
@@ -573,35 +605,7 @@ void P_PlayerThink(player_t * player)
         P_ChickenPlayerThink(player);
     }
 
-    mobj_t *m;
-    angle_t angle;
-    angle = player->mo->angle >> ANGLETOFINESHIFT;
-    m = P_SpawnMobj(player->mo->x + 160 * finecosine[angle],
-        player->mo->y + 160 * finesine[angle],
-        player->mo->z - 15 * FRACUNIT,
-        MT_JRRAWANDREDEEM);
-    m->target = player->mo;
-    if (P_CheckPosition(m, m->x, m->y) == false) {
-        P_RemoveMobj(m);
-        spawn_threshold = SPAWN_RELOAD;
-    } else if (P_CheckSight(player->mo, m) == false) {
-        P_RemoveMobj(m);
-        spawn_threshold = SPAWN_RELOAD;
-    } else {
-        if (spawn_threshold > 0) {
-            P_RemoveMobj(m);
-            spawn_threshold--;
-        } else {
-	    under(&corn_mutex) {
-                if (corns > 0) {
-                    corns--;
-		    spawn_threshold = SPAWN_RELOAD;
-		} else {
-                    P_RemoveMobj(m);
-		}
-	    }
-        }
-    }
+    P_CheckRedeem(player);
 
     // Handle movement
     if (player->mo->reactiontime)

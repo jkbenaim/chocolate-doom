@@ -5602,7 +5602,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
     {                           // MT_JRRAWANDREDEEM
      -1,                        // doomednum
      S_JRRAWANDREDEEM,          // spawnstate
-     1000,                      // spawnhealth
+     0,                         // spawnhealth
      S_NULL,                    // seestate
      sfx_None,                  // seesound
      8,                         // reactiontime
