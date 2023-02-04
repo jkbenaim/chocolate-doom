@@ -1070,9 +1070,10 @@ void P_PlayerInSpecialSector (player_t* player)
 	// SECRET SECTOR
 	player->secretcount++;
 	sector->special = 0;
-    I_WebUpdateSecretcount(player->secretcount);
-    player->message = "A SECRET IS REVEALED!";
-    S_StartSound(NULL, sfx_radio);
+	I_WebUpdateSecretcount(player->secretcount);
+	player->message = "A SECRET IS REVEALED!";
+	if (W_CheckNumForName("DSCHAT") != -1)
+		S_StartSound(NULL, sfx_chat);
 	break;
 			
       case 11:

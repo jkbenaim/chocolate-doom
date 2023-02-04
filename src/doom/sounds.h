@@ -221,6 +221,8 @@ typedef enum
     sfx_skesit,
     sfx_skeatk,
     sfx_radio,
+    sfx_chat,
+    sfx_hitem,
     NUMSFX
 } sfxenum_t;
 

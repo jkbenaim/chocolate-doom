@@ -536,6 +536,11 @@ P_TouchSpecialThing
 	break;
 	
 	// ammo
+      case SPR_AMG1:	// Heretic's gold wand crystal
+          player->message = "Picked up a wand crystal.";
+	  sound = sfx_hitem;
+	  break;
+
       case SPR_CLIP:
 	if (special->flags & MF_DROPPED)
 	{
@@ -603,7 +608,7 @@ P_TouchSpecialThing
 	    P_GiveAmmo (player, i, 1);
 	player->message = DEH_String(GOTBACKPACK);
 	break;
-	
+
 	// weapons
       case SPR_BFUG:
 	if (!P_GiveWeapon (player, wp_bfg, false) )

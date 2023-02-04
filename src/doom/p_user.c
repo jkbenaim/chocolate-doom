@@ -28,6 +28,10 @@
 
 #include "doomstat.h"
 
+#include "w_wad.h"
+
+#include "i_web.h"
+
 
 
 // Index of the special effects (INVUL inverse) map.
@@ -226,6 +230,51 @@ void P_DeathThink (player_t* player)
 //
 // P_PlayerThink
 //
+#define SPAWN_RELOAD (10)
+int spawn_threshold = SPAWN_RELOAD;
+bool warned_no_heretic = false;
+void P_CheckRedeem(player_t *player)
+{
+    mobj_t *m;
+    angle_t angle;
+    angle = player->mo->angle >> ANGLETOFINESHIFT;
+
+    if (-1 == W_CheckNumForName("AMG1A0")) {
+	    if (!warned_no_heretic) {
+		    printf("no heretic resources - redemptions disabled!\n");
+		    warned_no_heretic = true;
+	    }
+	    return;
+    }
+
+    m = P_SpawnMobj(player->mo->x + 160 * finecosine[angle],
+        player->mo->y + 160 * finesine[angle],
+        player->mo->z - 15 * FRACUNIT,
+        MT_JRRAWANDREDEEM);
+    m->target = player->mo;
+    if (P_CheckPosition(m, m->x, m->y) == false) {
+        P_RemoveMobj(m);
+        spawn_threshold = SPAWN_RELOAD;
+    } else if (P_CheckSight(player->mo, m) == false) {
+        P_RemoveMobj(m);
+        spawn_threshold = SPAWN_RELOAD;
+    } else {
+        if (spawn_threshold > 0) {
+            P_RemoveMobj(m);
+            spawn_threshold--;
+        } else {
+	    under(&corn_mutex) {
+                if (corns > 0) {
+                    corns--;
+		    spawn_threshold = SPAWN_RELOAD;
+		} else {
+                    P_RemoveMobj(m);
+		}
+	    }
+        }
+    }
+}
+
 void P_PlayerThink (player_t* player)
 {
     ticcmd_t*		cmd;
@@ -253,6 +302,8 @@ void P_PlayerThink (player_t* player)
 	P_DeathThink (player);
 	return;
     }
+    
+    P_CheckRedeem(player);
     
     // Move around.
     // Reactiontime is used to prevent movement

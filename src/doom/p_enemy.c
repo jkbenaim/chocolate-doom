@@ -2022,3 +2022,95 @@ void A_PlayerScream (mobj_t* mo)
     
     S_StartSound (mo, sound);
 }
+
+void A_JrraWandRedeem(mobj_t *actor)
+{
+    #define TELEFOGHEIGHT (32*FRACUNIT)
+    mobj_t mo;
+    mobj_t *corn;
+
+    switch (actor->health++) {
+    case 0:
+        actor->target = NULL;
+	actor->target = P_SpawnMobj(actor->x, actor->y, actor->z, MT_TELEGLITGEN);
+	P_SpawnMobj(actor->x, actor->y, TELEFOGHEIGHT, MT_HTFOG);
+	S_StartSound(actor->target, sfx_chat);
+	return;
+    case 1 ... 19:
+        return;
+    case 20:
+        if (actor->target) {
+            P_RemoveMobj(actor->target);
+	    actor->target = NULL;
+	}
+	break;
+    case 25:
+        P_RemoveMobj(actor);
+	return;
+    default:
+    }
+    mo.x = actor->x + (((P_Random() & 31) - 16) * FRACUNIT);
+    mo.y = actor->y + (((P_Random() & 31) - 16) * FRACUNIT);
+    mo.z = actor->z + 9*FRACUNIT;
+
+
+    corn = P_SpawnMobj(mo.x, mo.y, mo.z, MT_AMGWNDWIMPY);
+    corn->momx = P_SubRandom() << 9;
+    corn->momy = P_SubRandom() << 9;
+    corn->momz = FRACUNIT * 9 + (P_Random() << 10);
+    corn->flags |= MF_DROPPED;
+    corn->health = 1; // ammo value
+}
+
+//----------------------------------------------------------------------------
+//
+// PROC A_SpawnTeleGlitter
+//
+//----------------------------------------------------------------------------
+
+void A_SpawnTeleGlitter(mobj_t *actor, player_t *player, pspdef_t *psp)
+{
+    mobj_t *mo;
+    int r1, r2;
+
+    r1 = P_Random();
+    r2 = P_Random();
+    mo = P_SpawnMobj(actor->x + ((r2 & 31) - 16) * FRACUNIT,
+                     actor->y + ((r1 & 31) - 16) * FRACUNIT,
+                     actor->subsector->sector->floorheight, MT_TELEGLITTER);
+    mo->momz = FRACUNIT / 4;
+}
+
+//----------------------------------------------------------------------------
+//
+// PROC A_SpawnTeleGlitter2
+//
+//----------------------------------------------------------------------------
+
+void A_SpawnTeleGlitter2(mobj_t *actor, player_t *player, pspdef_t *psp)
+{
+    mobj_t *mo;
+    int r1, r2;
+
+    r1 = P_Random();
+    r2 = P_Random();
+    mo = P_SpawnMobj(actor->x + ((r2 & 31) - 16) * FRACUNIT,
+                     actor->y + ((r1 & 31) - 16) * FRACUNIT,
+                     actor->subsector->sector->floorheight, MT_TELEGLITTER2);
+    mo->momz = FRACUNIT / 4;
+}
+
+//----------------------------------------------------------------------------
+//
+// PROC A_AccTeleGlitter
+//
+//----------------------------------------------------------------------------
+
+void A_AccTeleGlitter(mobj_t *actor, player_t *player, pspdef_t *psp)
+{
+    if (++actor->health > 35)
+    {
+        actor->momz += actor->momz / 2;
+    }
+}
+

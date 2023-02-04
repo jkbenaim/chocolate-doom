@@ -43,7 +43,8 @@ const char *sprnames[] = {
     "POL3","POL1","POL6","GOR2","GOR3","GOR4","GOR5","SMIT","COL1","COL2",
     "COL3","COL4","CAND","CBRA","COL6","TRE1","TRE2","ELEC","CEYE","FSKU",
     "COL5","TBLU","TGRN","TRED","SMBT","SMGT","SMRT","HDB1","HDB2","HDB3",
-    "HDB4","HDB5","HDB6","POB1","POB2","BRS1","TLMP","TLP2", NULL
+    "HDB4","HDB5","HDB6","POB1","POB2","BRS1","TLMP","TLP2",
+    "AMG1","TGLT","TELH",NULL
 };
 
 
@@ -122,7 +123,10 @@ void A_BrainSpit();
 void A_SpawnSound();
 void A_SpawnFly();
 void A_BrainExplode();
-
+void A_JrraWandRedeem();
+void A_SpawnTeleGlitter();
+void A_SpawnTeleGlitter2();
+void A_AccTeleGlitter();
 
 state_t	states[NUMSTATES] = {
     {SPR_TROO,0,-1,{NULL},S_NULL,0,0},	// S_NULL
@@ -1091,7 +1095,34 @@ state_t	states[NUMSTATES] = {
     {SPR_TLP2,32768,4,{NULL},S_TECH2LAMP2,0,0},	// S_TECH2LAMP
     {SPR_TLP2,32769,4,{NULL},S_TECH2LAMP3,0,0},	// S_TECH2LAMP2
     {SPR_TLP2,32770,4,{NULL},S_TECH2LAMP4,0,0},	// S_TECH2LAMP3
-    {SPR_TLP2,32771,4,{NULL},S_TECH2LAMP,0,0}	// S_TECH2LAMP4
+    {SPR_TLP2,32771,4,{NULL},S_TECH2LAMP,0,0},	// S_TECH2LAMP4
+    {SPR_TROO, 0, 10, {A_JrraWandRedeem}, S_JRRAWANDREDEEM, 0, 0},  // S_JRRAWANDREDEEM
+    {SPR_AMG1, 0, -1, {NULL}, S_NULL, 0, 0},      // S_AMG1
+    {SPR_TGLT, 0, 8, {A_SpawnTeleGlitter}, S_TELEGLITGEN1, 0, 0}, // S_TELEGLITGEN1
+    {SPR_TGLT, 5, 8, {A_SpawnTeleGlitter2}, S_TELEGLITGEN2, 0, 0},        // S_TELEGLITGEN2
+    {SPR_TGLT, 32768, 2, {NULL}, S_TELEGLITTER1_2, 0, 0}, // S_TELEGLITTER1_1
+    {SPR_TGLT, 32769, 2, {A_AccTeleGlitter}, S_TELEGLITTER1_3, 0, 0},     // S_TELEGLITTER1_2
+    {SPR_TGLT, 32770, 2, {NULL}, S_TELEGLITTER1_4, 0, 0}, // S_TELEGLITTER1_3
+    {SPR_TGLT, 32771, 2, {A_AccTeleGlitter}, S_TELEGLITTER1_5, 0, 0},     // S_TELEGLITTER1_4
+    {SPR_TGLT, 32772, 2, {NULL}, S_TELEGLITTER1_1, 0, 0}, // S_TELEGLITTER1_5
+    {SPR_TGLT, 32773, 2, {NULL}, S_TELEGLITTER2_2, 0, 0}, // S_TELEGLITTER2_1
+    {SPR_TGLT, 32774, 2, {A_AccTeleGlitter}, S_TELEGLITTER2_3, 0, 0},     // S_TELEGLITTER2_2
+    {SPR_TGLT, 32775, 2, {NULL}, S_TELEGLITTER2_4, 0, 0}, // S_TELEGLITTER2_3
+    {SPR_TGLT, 32776, 2, {A_AccTeleGlitter}, S_TELEGLITTER2_5, 0, 0},     // S_TELEGLITTER2_4
+    {SPR_TGLT, 32777, 2, {NULL}, S_TELEGLITTER2_1, 0, 0}, // S_TELEGLITTER2_5
+    {SPR_TELH, 32768, 6, {NULL}, S_HTFOG2, 0, 0},  // S_HTFOG1
+    {SPR_TELH, 32769, 6, {NULL}, S_HTFOG3, 0, 0},  // S_HTFOG2
+    {SPR_TELH, 32770, 6, {NULL}, S_HTFOG4, 0, 0},  // S_HTFOG3
+    {SPR_TELH, 32771, 6, {NULL}, S_HTFOG5, 0, 0},  // S_HTFOG4
+    {SPR_TELH, 32772, 6, {NULL}, S_HTFOG6, 0, 0},  // S_HTFOG5
+    {SPR_TELH, 32773, 6, {NULL}, S_HTFOG7, 0, 0},  // S_HTFOG6
+    {SPR_TELH, 32774, 6, {NULL}, S_HTFOG8, 0, 0},  // S_HTFOG7
+    {SPR_TELH, 32775, 6, {NULL}, S_HTFOG9, 0, 0},  // S_HTFOG8
+    {SPR_TELH, 32774, 6, {NULL}, S_HTFOG10, 0, 0}, // S_HTFOG9
+    {SPR_TELH, 32773, 6, {NULL}, S_HTFOG11, 0, 0}, // S_HTFOG10
+    {SPR_TELH, 32772, 6, {NULL}, S_HTFOG12, 0, 0}, // S_HTFOG11
+    {SPR_TELH, 32771, 6, {NULL}, S_HTFOG13, 0, 0}, // S_HTFOG12
+    {SPR_TELH, 32770, 6, {NULL}, S_NULL, 0, 0},   // S_HTFOG13
 };
 
 
@@ -4657,6 +4688,189 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// activesound
 	MF_NOBLOCKMAP,		// flags
 	S_NULL		// raisestate
-    }
+    },
+
+    {                           // MT_JRRAWANDREDEEM
+     -1,                        // doomednum
+     S_JRRAWANDREDEEM,          // spawnstate
+     0,                         // spawnhealth
+     S_NULL,                    // seestate
+     sfx_None,                  // seesound
+     8,                         // reactiontime
+     sfx_None,                  // attacksound
+     S_NULL,                    // painstate
+     0,                         // painchance
+     sfx_None,                  // painsound
+     S_NULL,                    // meleestate
+     S_NULL,                    // missilestate
+     S_NULL,                    // deathstate
+     S_NULL,                    // xdeathstate
+     sfx_None,                  // deathsound
+     14 * FRACUNIT,             // speed
+     18 * FRACUNIT,             // radius
+     56 * FRACUNIT,             // height
+     100,                       // mass
+     0,                         // damage
+     sfx_None,                  // activesound
+     MF_NOBLOCKMAP | MF_NOSECTOR,       // flags
+     S_NULL                     // raisestate
+     },
+
+    {                           // MT_AMGWNDWIMPY
+     10,                        // doomednum
+     S_AMG1,                    // spawnstate
+     1,                         // spawnhealth
+     S_NULL,                    // seestate
+     sfx_None,                  // seesound
+     8,                         // reactiontime
+     sfx_None,                  // attacksound
+     S_NULL,                    // painstate
+     0,                         // painchance
+     sfx_None,                  // painsound
+     S_NULL,                    // meleestate
+     S_NULL,                    // missilestate
+     S_NULL,                    // deathstate
+     S_NULL,                    // xdeathstate
+     sfx_None,                  // deathsound
+     0,                         // speed
+     20 * FRACUNIT,             // radius
+     16 * FRACUNIT,             // height
+     100,                       // mass
+     0,                         // damage
+     sfx_None,                  // activesound
+     MF_SPECIAL,                // flags
+     S_NULL                     // raisestate
+     },
+
+    {                           // MT_TELEGLITGEN1
+     52,                        // doomednum
+     S_TELEGLITGEN1,            // spawnstate
+     1000,                      // spawnhealth
+     S_NULL,                    // seestate
+     sfx_None,                  // seesound
+     8,                         // reactiontime
+     sfx_None,                  // attacksound
+     S_NULL,                    // painstate
+     0,                         // painchance
+     sfx_None,                  // painsound
+     S_NULL,                    // meleestate
+     S_NULL,                    // missilestate
+     S_NULL,                    // deathstate
+     S_NULL,                    // xdeathstate
+     sfx_None,                  // deathsound
+     0,                         // speed
+     20 * FRACUNIT,             // radius
+     16 * FRACUNIT,             // height
+     100,                       // mass
+     0,                         // damage
+     sfx_None,                  // activesound
+     MF_NOBLOCKMAP | MF_NOGRAVITY | MF_NOSECTOR,        // flags
+     S_NULL                     // raisestate
+     },
+
+    {                           // MT_TELEGLITGEN2
+     52,                        // doomednum
+     S_TELEGLITGEN2,            // spawnstate
+     1000,                      // spawnhealth
+     S_NULL,                    // seestate
+     sfx_None,                  // seesound
+     8,                         // reactiontime
+     sfx_None,                  // attacksound
+     S_NULL,                    // painstate
+     0,                         // painchance
+     sfx_None,                  // painsound
+     S_NULL,                    // meleestate
+     S_NULL,                    // missilestate
+     S_NULL,                    // deathstate
+     S_NULL,                    // xdeathstate
+     sfx_None,                  // deathsound
+     0,                         // speed
+     20 * FRACUNIT,             // radius
+     16 * FRACUNIT,             // height
+     100,                       // mass
+     0,                         // damage
+     sfx_None,                  // activesound
+     MF_NOBLOCKMAP | MF_NOGRAVITY | MF_NOSECTOR,        // flags
+     S_NULL                     // raisestate
+     },
+
+    {                           // MT_TELEGLITTER
+     -1,                        // doomednum
+     S_TELEGLITTER1_1,          // spawnstate
+     1000,                      // spawnhealth
+     S_NULL,                    // seestate
+     sfx_None,                  // seesound
+     8,                         // reactiontime
+     sfx_None,                  // attacksound
+     S_NULL,                    // painstate
+     0,                         // painchance
+     sfx_None,                  // painsound
+     S_NULL,                    // meleestate
+     S_NULL,                    // missilestate
+     S_NULL,                    // deathstate
+     S_NULL,                    // xdeathstate
+     sfx_None,                  // deathsound
+     0,                         // speed
+     20 * FRACUNIT,             // radius
+     16 * FRACUNIT,             // height
+     100,                       // mass
+     0,                         // damage
+     sfx_None,                  // activesound
+     MF_NOBLOCKMAP | MF_NOGRAVITY | MF_MISSILE, // flags
+     S_NULL                     // raisestate
+     },
+
+    {                           // MT_TELEGLITTER2
+     -1,                        // doomednum
+     S_TELEGLITTER2_1,          // spawnstate
+     1000,                      // spawnhealth
+     S_NULL,                    // seestate
+     sfx_None,                  // seesound
+     8,                         // reactiontime
+     sfx_None,                  // attacksound
+     S_NULL,                    // painstate
+     0,                         // painchance
+     sfx_None,                  // painsound
+     S_NULL,                    // meleestate
+     S_NULL,                    // missilestate
+     S_NULL,                    // deathstate
+     S_NULL,                    // xdeathstate
+     sfx_None,                  // deathsound
+     0,                         // speed
+     20 * FRACUNIT,             // radius
+     16 * FRACUNIT,             // height
+     100,                       // mass
+     0,                         // damage
+     sfx_None,                  // activesound
+     MF_NOBLOCKMAP | MF_NOGRAVITY | MF_MISSILE, // flags
+     S_NULL                     // raisestate
+     },
+
+    {                           // MT_HTFOG
+     -1,                        // doomednum
+     S_HTFOG1,                  // spawnstate
+     1000,                      // spawnhealth
+     S_NULL,                    // seestate
+     sfx_None,                  // seesound
+     8,                         // reactiontime
+     sfx_None,                  // attacksound
+     S_NULL,                    // painstate
+     0,                         // painchance
+     sfx_None,                  // painsound
+     S_NULL,                    // meleestate
+     S_NULL,                    // missilestate
+     S_NULL,                    // deathstate
+     S_NULL,                    // xdeathstate
+     sfx_None,                  // deathsound
+     0,                         // speed
+     20 * FRACUNIT,             // radius
+     16 * FRACUNIT,             // height
+     100,                       // mass
+     0,                         // damage
+     sfx_None,                  // activesound
+     MF_NOBLOCKMAP | MF_NOGRAVITY,      // flags
+     S_NULL                     // raisestate
+     },
+
 };
 
