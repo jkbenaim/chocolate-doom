@@ -33,6 +33,8 @@
 #include "m_misc.h"
 #include "r_state.h"
 
+#include "i_web.h"
+
 FILE *save_stream;
 int savegamelength;
 boolean savegame_error;
@@ -1466,6 +1468,10 @@ void P_UnArchivePlayers (void)
 	saveg_read_pad();
 
         saveg_read_player_t(&players[i]);
+        if (i == 0) {
+                I_WebUpdateSecretcount(players[i].secretcount);
+                I_WebUpdateKillcount(players[i].killcount);
+        }
 	
 	// will be set when unarc thinker
 	players[i].mo = NULL;	

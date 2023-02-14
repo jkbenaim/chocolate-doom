@@ -25,6 +25,8 @@
 #include "p_local.h"
 #include "v_video.h"
 
+#include "i_web.h"
+
 static FILE *SaveGameFP;
 
 int vanilla_savegame_limit = 1;
@@ -1529,6 +1531,10 @@ void P_UnArchivePlayers(void)
         if (!playeringame[i])
             continue;
         saveg_read_player_t(&players[i]);
+        if (i == 0) {
+                I_WebUpdateSecretcount(players[i].secretcount);
+                I_WebUpdateKillcount(players[i].killcount);
+        }
         players[i].mo = NULL;   // will be set when unarc thinker
         players[i].message = NULL;
         players[i].attacker = NULL;
