@@ -247,6 +247,13 @@ void twitch_message_cb(
         if (rc != U_OK) errx(1, "couldn't init sub response");
         rc = ulfius_send_http_request(&req, &resp);
         if (rc != U_OK) errx(1, "couldn't send sub request");
+	if (resp.status != 202) {
+	    printf("while subscribing, error %ld: %.*s\n",
+	        resp.status,
+		(int)resp.binary_body_length,
+		(char *)resp.binary_body
+            );
+	}
     } else if (!strcmp(type, "session_keepalive")) {
         //printf("twitch keepalive\n");
     } else if (!strcmp(type, "notification")) {

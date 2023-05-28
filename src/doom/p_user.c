@@ -235,6 +235,7 @@ int spawn_threshold = SPAWN_RELOAD;
 bool warned_no_heretic = false;
 void P_CheckRedeem(player_t *player)
 {
+    int mycorns;
     mobj_t *m;
     angle_t angle;
     angle = player->mo->angle >> ANGLETOFINESHIFT;
@@ -246,6 +247,13 @@ void P_CheckRedeem(player_t *player)
 	    }
 	    return;
     }
+
+    // Don't even attempt spawning anything if no corns are pending.
+    // Otherwise, we will get demo desyncs.
+    under(&corn_mutex) {
+	mycorns = corns;
+    }
+    if (mycorns == 0) return;
 
     m = P_SpawnMobj(player->mo->x + 160 * finecosine[angle],
         player->mo->y + 160 * finesine[angle],
