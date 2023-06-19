@@ -381,7 +381,7 @@ int I_WebInit(void)
         ulfius_init_response(&response);
         rc = ulfius_set_websocket_request(
             &request,
-            "wss://eventsub-beta.wss.twitch.tv/ws",
+            "wss://eventsub.wss.twitch.tv/ws",
             NULL,
             NULL
         );
