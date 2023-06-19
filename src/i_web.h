@@ -13,6 +13,8 @@ extern int corns;
 
 struct jrra_info_s {
     bool valid;
+    bool hasSignaledDemo;
+    int demoplayback;
     int gamemission;
     int episode;
     int map;
@@ -37,5 +39,7 @@ void I_WebNewLevel(
 void I_WebUpdateSecretcount(int secretcount);
 
 void I_WebUpdateKillcount(int killcount);
+
+void I_WebIsDemo(int demoplayback);
 
 #endif

@@ -32,6 +32,7 @@ void I_WebNewLevel(
 {
     under(&infomutex) {
         jrra_info.valid = true;
+        jrra_info.hasSignaledDemo = false;
         jrra_info.gamemission = gamemission;
         jrra_info.episode = episode;
         jrra_info.map = map;
@@ -63,13 +64,29 @@ void I_WebUpdateKillcount(int killcount)
     pthread_cond_broadcast(&webcond);
 }
 
+void I_WebIsDemo(int demoplayback)
+{
+    bool shouldSignal = !jrra_info.hasSignaledDemo;
+    under(&infomutex) {
+        jrra_info.hasSignaledDemo = true;
+        jrra_info.demoplayback = demoplayback;
+    }
+    if (shouldSignal)
+        pthread_cond_broadcast(&webcond);
+}
+
 json_t *doominfo()
 {
     json_t *j = json_object();
     json_object_set(j,"hello",json_null());
-    if (jrra_info.valid == false) {
+    printf("%d %d %d\n", jrra_info.valid, jrra_info.hasSignaledDemo, jrra_info.demoplayback);
+    if (!jrra_info.valid)
         return j;
-    }
+    if (!jrra_info.hasSignaledDemo)
+        return j;
+    if (jrra_info.demoplayback)
+        return j;
+
     json_object_set(j, "gamemission", json_integer(jrra_info.gamemission));
     json_object_set(j, "episode", json_integer(jrra_info.episode));
     json_object_set(j, "map", json_integer(jrra_info.map));
@@ -80,6 +97,7 @@ json_t *doominfo()
     json_object_set(j, "killcount", json_integer(jrra_info.killcount));
     json_object_set(j, "totalsecret", json_integer(jrra_info.totalsecret));
     json_object_set(j, "secretcount", json_integer(jrra_info.secretcount));
+    json_object_set(j, "demoplayback", json_integer(jrra_info.demoplayback));
     return j;
 }
 
@@ -95,14 +113,16 @@ void manager_cb(
     }
 
     while (1) {
-        json_t *j = doominfo();
-        rc = ulfius_websocket_send_json_message(
-            manager,
-            j
-        );
-        json_decref(j);
-        rc = pthread_cond_wait(&webcond, &webmutex);
-        if (rc != 0) err(1, "pthread_cond_wait");
+        if (jrra_info.hasSignaledDemo) {
+            json_t *j = doominfo();
+            rc = ulfius_websocket_send_json_message(
+                manager,
+                j
+            );
+            json_decref(j);
+            rc = pthread_cond_wait(&webcond, &webmutex);
+            if (rc != 0) err(1, "pthread_cond_wait");
+        }
         if (webexit) return;
     }
 }

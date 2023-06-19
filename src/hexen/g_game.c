@@ -1054,6 +1054,8 @@ void G_Ticker(void)
 
             memcpy(cmd, &netcmds[i], sizeof(ticcmd_t));
 
+            I_WebIsDemo(demoplayback);
+
             if (demoplayback)
                 G_ReadDemoTiccmd(cmd);
             if (demorecording)
