@@ -79,7 +79,7 @@ json_t *doominfo()
 {
     json_t *j = json_object();
     json_object_set(j,"hello",json_null());
-    printf("%d %d %d\n", jrra_info.valid, jrra_info.hasSignaledDemo, jrra_info.demoplayback);
+
     if (!jrra_info.valid)
         return j;
     if (!jrra_info.hasSignaledDemo)
