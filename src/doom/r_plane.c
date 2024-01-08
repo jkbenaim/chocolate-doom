@@ -42,7 +42,8 @@ planefunction_t		ceilingfunc;
 //
 
 // Here comes the obnoxious "visplane".
-#define MAXVISPLANES	128
+#define MAXVISPLANES	2560
+#define OLDMAXVISPLANES 128
 visplane_t		visplanes[MAXVISPLANES];
 visplane_t*		lastvisplane;
 visplane_t*		floorplane;
@@ -237,6 +238,14 @@ R_FindPlane
 		
     if (lastvisplane - visplanes == MAXVISPLANES)
 	I_Error ("R_FindPlane: no more visplanes");
+    if (lastvisplane - visplanes >= OLDMAXVISPLANES) {
+        static unsigned overflow_count = 0;
+        fprintf(stderr, "vanilla would run out of visplanes: %ld >= %d %c\n",
+	    lastvisplane - visplanes,
+	    OLDMAXVISPLANES,
+	    "-\\|/"[overflow_count = ((overflow_count +1) % 4)]
+	);
+    }
 		
     lastvisplane++;
 
@@ -368,6 +377,15 @@ void R_DrawPlanes (void)
     int			stop;
     int			angle;
     int                 lumpnum;
+
+    if (ds_p - drawsegs >= OLDMAXDRAWSEGS) {
+	static unsigned overflow_count = 0;
+        fprintf(stderr, "vanilla would run out of drawsegs: %ld >= %d %c\n",
+	    ds_p - drawsegs,
+	    OLDMAXDRAWSEGS,
+	    "-\\|/"[overflow_count = (overflow_count + 1) % 4]
+	);
+    }
 				
 #ifdef RANGECHECK
     if (ds_p - drawsegs > MAXDRAWSEGS)
