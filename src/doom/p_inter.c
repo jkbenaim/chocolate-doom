@@ -817,11 +817,23 @@ P_DamageMobj
     {
 	target->momx = target->momy = target->momz = 0;
     }
+
+#if 1
+    // all damage is fatal!
+    if (target->player
+            && !(target->flags & MF_NOCLIP)
+	    && !(target->player->powers[pw_invulnerability])
+	    && !(target->player->cheats & CF_GODMODE)
+	    && (damage > 0)
+	    && (damage < 500)) {
+        damage = 500;
+    }
+#endif
 	
     player = target->player;
     if (player && gameskill == sk_baby)
 	damage >>= 1; 	// take half damage in trainer mode
-		
+
 
     // Some close combat weapons should not
     // inflict thrust and push the victim out of reach,
