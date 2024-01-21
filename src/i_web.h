@@ -42,4 +42,6 @@ void I_WebUpdateKillcount(int killcount);
 
 void I_WebIsDemo(int demoplayback);
 
+char *escape_url(const char *orig) __attribute__((nonnull(1)));
+char *escape_xml(const char *orig) __attribute__((nonnull(1)));
 #endif

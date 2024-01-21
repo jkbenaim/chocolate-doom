@@ -20,8 +20,132 @@ pthread_mutex_t infomutex;
 bool webexit = false;
 pthread_mutex_t corn_mutex;
 int corns;
+char *twitch_auth_url = NULL;
+
+int port = -1;
+const int port_min = 8080;
+const int port_max = 8089;
+
+enum {
+    SUBSCRIBED_NOTYET = 0,
+    SUBSCRIBED_OK = 1,
+    SUBSCRIBED_INVALID_TOKEN = 2,
+} subscribed_status = SUBSCRIBED_NOTYET;
 
 struct jrra_info_s jrra_info = {.valid=false};
+
+const char reservedChars[] = "!*'();:@&=+$,/?#[]%";
+const char unreservedChars[] = \
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
+	"abcdefghijklmnopqrstuvwxyz" \
+	"0123456789-_.~";
+
+bool isReservedChar(char suspect)
+{
+	return strchr(reservedChars, suspect) != NULL;
+}
+
+bool isNotUnreservedChar(char suspect)
+{
+	return strchr(unreservedChars, suspect) == NULL;
+}
+
+bool isXmlReservedChar(char suspect)
+{
+	if (suspect == '&') return true;
+	if (suspect == '<') return true;
+	return false;
+}
+
+char *escape_url(const char *orig)
+{
+	char *out = NULL;
+	size_t outLength = 0;
+	size_t origLength = strlen(orig);
+	const char *inp = orig;
+	char *outp;
+	char *test;
+	size_t i;
+
+	out = malloc(origLength*strlen("%99") + 1);
+	if (!out) {
+		fprintf(stderr, "error in percent_encode: out of memory\n");
+		return NULL;
+	}
+
+	outp = out;
+
+	for (i = 0; i < origLength; i++) {
+		unsigned char suspect = *inp++;
+		if (isNotUnreservedChar(suspect)) {
+			*outp++ = '%';
+			*outp++ = "0123456789ABCDEF"[(suspect/16)%16];
+			*outp++ = "0123456789ABCDEF"[suspect%16];
+			outLength += 3;
+		} else {
+			*outp++ = suspect;
+			outLength++;
+		}
+	}
+	*outp = '\0';
+	outLength++;
+	test = realloc(out, outLength);
+	if (test) {
+		out = test;
+	}
+	return out;
+}
+
+char *escape_xml(const char *orig)
+{
+	char *out = NULL;
+	size_t outLength = 0;
+	size_t origLength = strlen(orig);
+	const char *inp = orig;
+	char *outp;
+	char *test;
+	size_t i;
+
+	out = malloc(origLength*strlen("&amp;") + 1);
+	if (!out) {
+		fprintf(stderr, "error in xml_escape: out of memory\n");
+		return NULL;
+	}
+
+	outp = out;
+
+	for (i = 0; i < origLength; i++) {
+		char suspect = *inp++;
+		switch (suspect) {
+		case '&':
+			*outp++ = '&';
+			*outp++ = 'a';
+			*outp++ = 'm';
+			*outp++ = 'p';
+			*outp++ = ';';
+			outLength += 5;
+			break;
+		case '<':
+			*outp++ = '&';
+			*outp++ = 'l';
+			*outp++ = 't';
+			*outp++ = ';';
+			outLength += 4;
+			break;
+		default:
+			*outp++ = suspect;
+			outLength += 1;
+			break;
+		}
+	}
+	*outp = '\0';
+	outLength++;
+	test = realloc(out, outLength);
+	if (test) {
+		out = test;
+	}
+	return out;
+}
 
 void I_WebNewLevel(
     int gamemission,
@@ -98,6 +222,9 @@ json_t *doominfo()
     json_object_set(j, "totalsecret", json_integer(jrra_info.totalsecret));
     json_object_set(j, "secretcount", json_integer(jrra_info.secretcount));
     json_object_set(j, "demoplayback", json_integer(jrra_info.demoplayback));
+    if (twitch_auth_url) {
+        json_object_set(j, "twitch_auth_url", json_string(twitch_auth_url));
+    }
     return j;
 }
 
@@ -239,7 +366,8 @@ void twitch_message_cb(
         }
 
         rc = ulfius_init_request(&req);
-        if (rc != U_OK) errx(1, "couldn't init sub request");
+        if (rc != U_OK)
+            errx(1, "couldn't init sub request");
 
         rc = ulfius_set_request_properties(
             &req,
@@ -250,30 +378,73 @@ void twitch_message_cb(
             U_OPT_HEADER_PARAMETER, "Client-Id", getenv("CHOCO_CID"),
             U_OPT_NONE
         );
-        if (rc != U_OK) errx(1, "couldn't set sub request properties");
+        if (rc != U_OK)
+            errx(1, "couldn't set sub request properties");
 
         subbody = json_loads("{\"type\":\"channel.channel_points_custom_reward_redemption.add\",\"version\":\"1\",\"condition\":{\"broadcaster_user_id\":\"44201757\"},\"transport\":{\"method\":\"websocket\"}}", 0, NULL);
         if (!subbody) errx(1, "couldn't json_loads");
 
         rc = json_unpack(subbody, "{so}", "transport", &transport);
-        if (rc == -1) errx(1, "couldn't json_unpack for transport");
+        if (rc == -1)
+            errx(1, "couldn't json_unpack for transport");
         rc = json_object_set(transport, "session_id", json_string(session_id));
-        if (rc == -1) errx(1, "couldn't set session_id");
+        if (rc == -1)
+            errx(1, "couldn't set session_id");
 
         rc = ulfius_set_json_body_request(&req, subbody);
-        if (rc != U_OK) errx(1, "couldn't set sub request json body");
+        if (rc != U_OK)
+            errx(1, "couldn't set sub request json body");
 
         rc = ulfius_init_response(&resp);
-        if (rc != U_OK) errx(1, "couldn't init sub response");
+        if (rc != U_OK)
+            errx(1, "couldn't init sub response");
         rc = ulfius_send_http_request(&req, &resp);
-        if (rc != U_OK) errx(1, "couldn't send sub request");
-	if (resp.status != 202) {
-	    printf("while subscribing, error %ld: %.*s\n",
-	        resp.status,
-		(int)resp.binary_body_length,
-		(char *)resp.binary_body
+        if (rc != U_OK)
+            errx(1, "couldn't send sub request");
+        if (resp.status == 202) {
+            under(&infomutex) {
+                subscribed_status = SUBSCRIBED_OK;
+                free(twitch_auth_url);
+                twitch_auth_url = NULL;
+            }
+        } else {
+            printf("while subscribing, error %ld: %.*s\n",
+                resp.status,
+                (int)resp.binary_body_length,
+                (char *)resp.binary_body
             );
-	}
+            under(&infomutex) {
+                int rc;
+                char *redirect_uri, *encoded_redirect_uri;
+                char *encoded_scope;
+                char *url;
+                subscribed_status = SUBSCRIBED_INVALID_TOKEN;
+                free(twitch_auth_url);
+                twitch_auth_url = NULL;
+
+                rc = asprintf(&redirect_uri, "http://localhost:%d/authorize", port);
+                if (rc == -1)
+                    err(1, "in asprintf");
+                encoded_redirect_uri = escape_url(redirect_uri);
+                if (!encoded_redirect_uri)
+                    err(1, "in escape_url");
+
+                encoded_scope = escape_url("channel:read:redemptions");
+                
+                rc = asprintf(&url, "https://id.twitch.tv/oauth2/authorize?client_id=%s&redirect_uri=%s&response_type=token&scope=%s",
+                    getenv("CHOCO_CID"),
+                    encoded_redirect_uri,
+                    encoded_scope
+                );
+                if (rc == -1)
+                    err(1, "in asprintf");
+                twitch_auth_url = url;
+
+                free(encoded_scope);
+                free(encoded_redirect_uri);
+                free(redirect_uri);
+            }
+        }
     } else if (!strcmp(type, "session_keepalive")) {
         //printf("twitch keepalive\n");
     } else if (!strcmp(type, "notification")) {
@@ -340,14 +511,19 @@ void I_WebDestroy(void)
 
 int I_WebInit(void)
 {
-    int port = 8080;
     int rc;
     struct _u_request request;
     struct _u_response response;
     struct _websocket_client_handler twitch_client_handler = {NULL, NULL};
 
-    if (ulfius_init_instance(&web, port, NULL, NULL) != U_OK) {
-        printf("failure in ulfius_init_instance\n");
+    for (port = port_min; port < (port_max + 1); port++) {
+        if (ulfius_init_instance(&web, port, NULL, NULL) == U_OK) {
+            break;
+        }
+    }
+    if (port == (port_max + 1)) {
+        port = -1;
+        printf("couldn't start ulfius\n");
         return -1;
     }
 
@@ -361,14 +537,9 @@ int I_WebInit(void)
         NULL
     );
 
-    for (port = 8080; port < 8090; port++) {
-        web.port = port;
-        if (ulfius_start_framework(&web) == U_OK) {
-            break;
-        }
-    }
-    if (port == 8090) {
-        printf("couldn't start ulfius\n");
+    web.port = port;
+    if (ulfius_start_framework(&web) != U_OK) {
+        printf("in ulfius_start_framework\n");
         return -1;
     }
     printf("web ok: http://localhost:%d\n", port);
