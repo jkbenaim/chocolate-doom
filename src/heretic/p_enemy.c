@@ -2722,22 +2722,23 @@ void A_JrraWandRedeem(mobj_t *actor, player_t *player, pspdef_t *psp)
     mobj_t *corn;
     switch (actor->health++) {
     case 0:
-	actor->target = P_SpawnMobj(actor->x, actor->y, actor->z, MT_TELEGLITGEN2);
-	P_SpawnMobj(actor->x, actor->y, actor->z + TELEFOGHEIGHT, MT_TFOG);
+        actor->target = P_SpawnMobj(actor->x, actor->y, actor->z, MT_TELEGLITGEN2);
+        P_SpawnMobj(actor->x, actor->y, actor->z + TELEFOGHEIGHT, MT_TFOG);
         S_StartSound(actor->target, sfx_chat);
-	return;
+    	return;
     case 1 ... 19:
         return;
     case 20:
         if (actor->target) {
             P_RemoveMobj(actor->target);
-	    actor->target = NULL;
-	}
-	break;
+	        actor->target = NULL;
+    	}
+    	break;
     case 25:
         P_RemoveMobj(actor);
-	return;
+    	return;
     default:
+        break;
     }
     mo.x = actor->x + (((P_Random() & 31) - 16) * FRACUNIT);
     mo.y = actor->y + (((P_Random() & 31) - 16) * FRACUNIT);

@@ -553,14 +553,14 @@ void P_CheckRedeem(player_t *player)
             P_RemoveMobj(m);
             spawn_threshold--;
         } else {
-	    under(&corn_mutex) {
+            under(&corn_mutex) {
                 if (corns > 0) {
                     corns--;
-		    spawn_threshold = SPAWN_RELOAD;
-		} else {
+                    spawn_threshold = SPAWN_RELOAD;
+                } else {
                     P_RemoveMobj(m);
-		}
-	    }
+                }
+            }
         }
     }
 }
