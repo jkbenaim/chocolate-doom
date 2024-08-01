@@ -1071,14 +1071,14 @@ void P_PlayerInSpecialSector (player_t* player)
 	player->secretcount++;
 	sector->special = 0;
 	I_WebUpdateSecretcount(player->secretcount);
-	player->message = "A SECRET IS REVEALED!";
+	player->message = "A secret is revealed!";
 	if (W_CheckNumForName("DSCHAT") != -1)
 		S_StartSound(NULL, sfx_chat);
 	break;
 			
       case 11:
 	// EXIT SUPER DAMAGE! (for E1M8 finale)
-	player->cheats &= ~CF_GODMODE;
+	//player->cheats &= ~CF_GODMODE;
 
 	if (!(leveltime&0x1f))
 	    P_DamageMobj (player->mo, NULL, NULL, 20);

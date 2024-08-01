@@ -395,6 +395,7 @@ cheatseq_t cheat_ammo = CHEAT("idkfa", 0);
 cheatseq_t cheat_ammonokey = CHEAT("idfa", 0);
 cheatseq_t cheat_noclip = CHEAT("idspispopd", 0);
 cheatseq_t cheat_commercial_noclip = CHEAT("idclip", 0);
+cheatseq_t cheat_massacre = CHEAT("massacre", 0);
 
 cheatseq_t	cheat_powerup[7] =
 {
@@ -605,6 +606,11 @@ ST_Responder (event_t* ev)
                    players[consoleplayer].mo->x,
                    players[consoleplayer].mo->y);
         plyr->message = buf;
+      }
+      else if (cht_CheckCheat(&cheat_massacre, ev->data2))
+      {
+        P_Massacre();
+        plyr->message = "Massacre!";
       }
     }
     

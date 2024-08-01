@@ -1257,6 +1257,43 @@ void P_DamageMobj
         }
         target->momx = target->momy = target->momz = 0;
     }
+
+#if 1
+    // report any calls for 0 damage
+    if ((damage == 0) && target->player) {
+        printf("0 damage call on player\n");
+    }
+#endif
+
+#if 1
+    // all damage is fatal!
+    //
+    // any player damage is increased to be fatal.
+    // the amount of damage required to kill a player
+    // corresponds to the amount of health and armor they
+    // can have (200+200), plus the fact players on skill 1
+    // will take half damage. therefore, fatal damage
+    // can be calculatued as: (200 health + 200 armor) * 2 = 800.
+    //
+    // also, players who have god mode (or who might otherwise
+    // survive fatal damage) must NOT have their damage adjusted.
+    // this is for demo compatibility. players who take extra
+    // damage while immune to it will still be pushed backwards
+    // more than usual. demo IN-compatibility is fine, however,
+    // if the player dies, because who cares about a demo
+    // where the dude dies?
+    //
+    const typeof(damage) fataldamage = 800;
+    if (target->player
+            && !(target->flags & MF_NOCLIP)
+            && !(target->player->powers[pw_invulnerability])
+            && !(target->player->cheats & CF_GODMODE)
+            && (damage > 0)
+            && (damage < fataldamage)) {
+            damage = fataldamage;
+    }
+#endif
+
     player = target->player;
     if (player && gameskill == sk_baby)
     {

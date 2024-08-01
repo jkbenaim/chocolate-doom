@@ -97,7 +97,11 @@ const char *jrra_get_gamename(int logical_gamemission)
         gamename = "doom";
         break;
     case doom2:
+#if 1
+    	gamename = "scythe";
+#else
         gamename = "doom2";
+#endif
         break;
     case pack_plut:
         gamename = "plutonia";

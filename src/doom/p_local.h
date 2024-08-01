@@ -125,6 +125,7 @@ void	P_SpawnPlayerMissile (mobj_t* source, mobjtype_t type);
 // P_ENEMY
 //
 void P_NoiseAlert (mobj_t* target, mobj_t* emmiter);
+void P_Massacre(void);
 
 
 //

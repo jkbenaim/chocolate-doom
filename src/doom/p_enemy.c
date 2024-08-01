@@ -1611,6 +1611,31 @@ void A_Explode (mobj_t* thingy)
     P_RadiusAttack(thingy, thingy->target, 128);
 }
 
+//
+// P_Massacre
+// Kills all monsters.
+//
+
+void P_Massacre(void)
+{
+    mobj_t *mo;
+    thinker_t *think;
+
+	    //&& ((mobj_t *)currentthinker)->type == MT_SKULL)
+    for (think = thinkercap.next; think != &thinkercap; think = think->next)
+    {
+	    if (think->function.acp1 != (actionf_p1)P_MobjThinker)
+        {                       // Not a mobj thinker
+            continue;
+        }
+        mo = (mobj_t *) think;
+        if (((mo->flags & MF_COUNTKILL) || (mo->type == MT_SKULL) || (mo->type == MT_BOSSBRAIN)) && (mo->health > 0))
+        {
+            P_DamageMobj(mo, NULL, NULL, 10000);
+        }
+    }
+}
+
 // Check whether the death of the specified monster type is allowed
 // to trigger the end of episode special action.
 //

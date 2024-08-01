@@ -818,7 +818,7 @@ P_DamageMobj
 	target->momx = target->momy = target->momz = 0;
     }
 
-#if 1
+#if 0
     // all damage is fatal!
     if (target->player
             && !(target->flags & MF_NOCLIP)
