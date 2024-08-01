@@ -936,11 +936,104 @@ static default_t extra_defaults_list[] =
 
     CONFIG_VARIABLE_STRING(music_pack_path),
 
+#ifdef HAVE_FLUIDSYNTH
+    //!
+    // If 1, activate the FluidSynth chorus effects module. If 0, no chorus
+    // will be added to the output signal.
+    //
+
+    CONFIG_VARIABLE_INT(fsynth_chorus_active),
+
+    //!
+    // Specifies the modulation depth of the FluidSynth chorus. Default is
+    // 5.0, range is 0.0 to 256.0.
+    //
+
+    CONFIG_VARIABLE_FLOAT(fsynth_chorus_depth),
+
+    //!
+    // Specifies the output amplitude of the FluidSynth chorus signal. Default
+    // is 0.35, range is 0.0 to 10.0.
+    //
+
+    CONFIG_VARIABLE_FLOAT(fsynth_chorus_level),
+
+    //!
+    // Sets the voice count of the FluidSynth chorus signal. Default is 3,
+    // range is 0 to 99.
+    //
+
+    CONFIG_VARIABLE_INT(fsynth_chorus_nr),
+
+    //!
+    // Sets the FluidSynth chorus modulation speed in Hz. Default is 0.3,
+    // range is 0.1 to 5.0.
+    //
+
+    CONFIG_VARIABLE_FLOAT(fsynth_chorus_speed),
+
+    //!
+    // This setting defines how FluidSynth interprets Bank Select messages. The
+    // default is "gs". Other possible values are "gm", "xg" and "mma".
+    //
+
+    CONFIG_VARIABLE_STRING(fsynth_midibankselect),
+
+    //!
+    // Sets the number of FluidSynth voices that can be played in parallel.
+    // Default is 256, range is 1 - 65535.
+    //
+
+    CONFIG_VARIABLE_INT(fsynth_polyphony),
+
+    //!
+    // If 1, activate the FluidSynth reverb effects module. If 0, no reverb
+    // will be added to the output signal.
+    //
+
+    CONFIG_VARIABLE_INT(fsynth_reverb_active),
+
+    //!
+    // Sets the amount of FluidSynth reverb damping. Default is 0.4, range is
+    // 0.0 to 1.0.
+    //
+
+    CONFIG_VARIABLE_FLOAT(fsynth_reverb_damp),
+
+    //!
+    // Sets the FluidSynth reverb amplitude. Default is 0.15, range is 0.0 -
+    // 1.0.
+    //
+
+    CONFIG_VARIABLE_FLOAT(fsynth_reverb_level),
+
+    //!
+    // Sets the room size(i.e. amount of wet) FluidSynth reverb. Default is
+    // 0.6, range is 0.0 - 1.0.
+    //
+
+    CONFIG_VARIABLE_FLOAT(fsynth_reverb_roomsize),
+
+    //!
+    // Sets the stereo spread of the FluidSynth reverb signal. Default is
+    // 0.4, range is 0.0 - 100.0.
+    //
+
+    CONFIG_VARIABLE_FLOAT(fsynth_reverb_width),
+
+    //!
+    // Fine tune the FluidSynth output level. Default is 1.0,
+    // range is 0.0 - 10.0.
+    //
+
+    CONFIG_VARIABLE_FLOAT(fsynth_gain),
+
     //!
     // Full path to a soundfont file to use with FluidSynth MIDI playback.
     //
 
-    CONFIG_VARIABLE_STRING(fluidsynth_sf_path),
+    CONFIG_VARIABLE_STRING(fsynth_sf_path),
+#endif // HAVE_FLUIDSYNTH
 
     //!
     // Full path to a Timidity configuration file to use for MIDI
@@ -973,16 +1066,24 @@ static default_t extra_defaults_list[] =
     CONFIG_VARIABLE_STRING(winmm_midi_device),
 
     //!
-    // Reverb level for native Windows MIDI, default 40, range 0-127.
+    // Compatibility level for native Windows MIDI, default 0. Valid values are
+    // 0 (Vanilla), 1 (Standard), 2 (Full).
     //
 
-    CONFIG_VARIABLE_INT(winmm_reverb_level),
+    CONFIG_VARIABLE_INT(winmm_complevel),
 
     //!
-    // Chorus level for native Windows MIDI, default 0, range 0-127.
+    // Reset device type for native Windows MIDI, default 1. Valid values are
+    // 0 (None), 1 (GM Mode), 2 (GS Mode), 3 (XG Mode).
     //
 
-    CONFIG_VARIABLE_INT(winmm_chorus_level),
+    CONFIG_VARIABLE_INT(winmm_reset_type),
+
+    //!
+    // Reset device delay for native Windows MIDI, default 0, median value 100 ms.
+    //
+
+    CONFIG_VARIABLE_INT(winmm_reset_delay),
 #endif
 
     //!
@@ -1149,6 +1250,12 @@ static default_t extra_defaults_list[] =
     CONFIG_VARIABLE_INT(joystick_index),
 
     //!
+    // If non-zero, use analog movement when playing with a gamepad.
+    //
+
+    CONFIG_VARIABLE_INT(use_analog),
+
+    //!
     // Joystick axis to use to for horizontal (X) movement.
     //
 
@@ -1159,6 +1266,12 @@ static default_t extra_defaults_list[] =
     //
 
     CONFIG_VARIABLE_INT(joystick_x_invert),
+
+    //!
+    // Joystick turn analog sensitivity, specified as a value between 0 and 20.
+    //
+
+    CONFIG_VARIABLE_INT(joystick_turn_sensitivity),
 
     //!
     // Joystick axis to use to for vertical (Y) movement.
@@ -1186,6 +1299,12 @@ static default_t extra_defaults_list[] =
     CONFIG_VARIABLE_INT(joystick_strafe_invert),
 
     //!
+    // Joystick move and strafe analog sensitivity, specified as a value
+    // between 0 and 20.
+    //
+
+    CONFIG_VARIABLE_INT(joystick_move_sensitivity),
+    //!
     // Joystick axis to use to for looking up and down.
     //
 
@@ -1197,6 +1316,12 @@ static default_t extra_defaults_list[] =
     //
 
     CONFIG_VARIABLE_INT(joystick_look_invert),
+
+    //!
+    // Joystick look analog sensitivity, specified as a value between 0 and 20.
+    //
+
+    CONFIG_VARIABLE_INT(joystick_look_sensitivity),
 
     //!
     // The physical joystick button that corresponds to joystick
@@ -1274,6 +1399,47 @@ static default_t extra_defaults_list[] =
     //
 
     CONFIG_VARIABLE_INT(joystick_physical_button10),
+
+    //!
+    // If non-zero, use the SDL_GameController interface instead of the
+    // SDL_Joystick interface.
+    //
+
+    CONFIG_VARIABLE_INT(use_gamepad),
+
+    //!
+    // Stores the SDL_GameControllerType of the last configured gamepad.
+    //
+
+    CONFIG_VARIABLE_INT(gamepad_type),
+
+    //!
+    // Joystick x axis dead zone, specified as a percentage of the axis max
+    // value.
+    //
+
+    CONFIG_VARIABLE_INT(joystick_x_dead_zone),
+
+    //!
+    // Joystick y axis dead zone, specified as a percentage of the axis max
+    // value.
+    //
+
+    CONFIG_VARIABLE_INT(joystick_y_dead_zone),
+
+    //!
+    // Joystick strafe axis dead zone, specified as a percentage of the axis
+    // max value.
+    //
+
+    CONFIG_VARIABLE_INT(joystick_strafe_dead_zone),
+
+    //!
+    // Joystick look axis dead zone, specified as a percentage of the axis max
+    // value.
+    //
+
+    CONFIG_VARIABLE_INT(joystick_look_dead_zone),
 
     //!
     // Joystick virtual button to make the player strafe left.

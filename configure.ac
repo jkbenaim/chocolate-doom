@@ -3,7 +3,7 @@ AC_INIT(Chocolate Doom, 3.0.0,
 
 PACKAGE_SHORTNAME=${PACKAGE_NAME% Doom}
 PACKAGE_SHORTDESC="Conservative source port"
-PACKAGE_COPYRIGHT="Copyright (C) 1993-2022"
+PACKAGE_COPYRIGHT="Copyright (C) 1993-2023"
 PACKAGE_LICENSE="GNU General Public License, version 2"
 PACKAGE_MAINTAINER="Simon Howard"
 PACKAGE_URL="https://www.chocolate-doom.org/"
@@ -31,7 +31,7 @@ then
         CFLAGS="-O$OPT_LEVEL -g $WARNINGS $orig_CFLAGS"
 fi
 
-PKG_CHECK_MODULES(SDL, [sdl2 >= 2.0.7])
+PKG_CHECK_MODULES(SDL, [sdl2 >= 2.0.14])
 # Check for SDL2_mixer
 AC_ARG_ENABLE([sdl2mixer],
 AS_HELP_STRING([--disable-sdl2mixer], [Disable SDL2_mixer support])
@@ -140,10 +140,28 @@ AS_IF([test "x$with_libpng" != xno], [
     ])
 ])
 
+# Check for fluidsynth.
+AC_ARG_WITH([fluidsynth],
+AS_HELP_STRING([--without-fluidsynth],
+    [Build without fluidsynth @<:@default=check@:>@]),
+[],
+[
+    [with_fluidsynth=check]
+])
+AS_IF([test "x$with_fluidsynth" != xno] && [test "x$enable_sdl2mixer" != xno], [
+    PKG_CHECK_MODULES(FLUIDSYNTH, fluidsynth >= 2.2.0, [
+        AC_DEFINE([HAVE_FLUIDSYNTH], [1], [fluidsynth installed])
+    ], [
+        AS_IF([test "x$with_fluidsynth" != xcheck], [AC_MSG_FAILURE(
+            [--with-fluidsynth was given, but test for fluidsynth failed])
+        ])
+    ])
+])
+
 # TODO: We currently link everything against libraries that don't need it.
 # Use the specific library CFLAGS/LIBS variables instead of setting them here.
-CFLAGS="$CFLAGS $SDL_CFLAGS ${SAMPLERATE_CFLAGS:-} ${PNG_CFLAGS:-} $SQLITE_CFLAGS"
-LDFLAGS="$LDFLAGS $SDL_LIBS ${SAMPLERATE_LIBS:-} ${PNG_LIBS:-} $SQLITE_LIBS"
+CFLAGS="$CFLAGS $SDL_CFLAGS ${SAMPLERATE_CFLAGS:-} ${PNG_CFLAGS:-} ${FLUIDSYNTH_CFLAGS:-} $SQLITE_CFLAGS"
+LDFLAGS="$LDFLAGS $SDL_LIBS ${SAMPLERATE_LIBS:-} ${PNG_LIBS:-} ${FLUIDSYNTH_LIBS:-} $SQLITE_LIBS"
 case "$host" in
   *-*-mingw* | *-*-cygwin* | *-*-msvc* )
     LDFLAGS="$LDFLAGS -lwinmm"

@@ -917,10 +917,20 @@ void I_InitWindowIcon(void)
 
 static void SetScaleFactor(int factor)
 {
+    int height;
+
     // Pick 320x200 or 320x240, depending on aspect ratio correct
+    if (aspect_ratio_correct)
+    {
+        height = SCREENHEIGHT_4_3;
+    }
+    else
+    {
+        height = SCREENHEIGHT;
+    }
 
     window_width = factor * SCREENWIDTH;
-    window_height = factor * actualheight;
+    window_height = factor * height;
     fullscreen = false;
 }
 
@@ -1027,6 +1037,24 @@ void I_GraphicsCheckCommandLine(void)
             window_width = w;
             window_height = h;
             fullscreen = false;
+        }
+    }
+
+    //!
+    // @category video
+    // @arg <x>
+    //
+    // Specify the display number on which to show the screen.
+    //
+
+    i = M_CheckParmWithArgs("-display", 1);
+
+    if (i > 0)
+    {
+        int display = atoi(myargv[i + 1]);
+        if (display >= 0)
+        {
+            video_display = display;
         }
     }
 
