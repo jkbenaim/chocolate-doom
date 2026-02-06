@@ -1718,6 +1718,8 @@ void G_DoLoadGame(void)
     {                           // Missing savegame termination marker
         I_Error("Bad savegame");
     }
+
+    SV_Close();
 }
 
 
@@ -2274,7 +2276,8 @@ void G_DoSaveGame(void)
     P_ArchiveWorld();
     P_ArchiveThinkers();
     P_ArchiveSpecials();
-    SV_Close(filename);
+    SV_WriteSaveGameEOF();
+    SV_Close();
 
     gameaction = ga_nothing;
     savedescription[0] = 0;
